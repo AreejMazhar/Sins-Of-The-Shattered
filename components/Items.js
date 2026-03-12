@@ -7,9 +7,9 @@ window.renderItems = function(data, appInstance) {
     container.innerHTML = `
         <div class="section-header">
             <h2 class="section-title">Items &amp; Loot</h2>
-            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-                <input type="text" id="item-search" placeholder="Search items..." style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin-bottom:0; width:200px;" />
-                <select id="item-rarity-filter" style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin-bottom:0;">
+            <div style="display:flex; align-items:center; gap:0.6rem; flex-shrink:0;">
+                <input type="text" id="item-search" placeholder="Search items..." style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0; width:160px;" />
+                <select id="item-rarity-filter" style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0;">
                     <option value="">All Rarities</option>
                     <option value="common">Common</option>
                     <option value="uncommon">Uncommon</option>
@@ -17,7 +17,7 @@ window.renderItems = function(data, appInstance) {
                     <option value="epic">Epic</option>
                     <option value="legendary">Legendary</option>
                 </select>
-                <button id="add-item-btn" class="btn" style="white-space:nowrap;">+ Add Item</button>
+                <button id="add-item-btn" class="btn" style="white-space:nowrap; margin:0;">+ Add Item</button>
             </div>
         </div>
 
@@ -59,11 +59,15 @@ window.renderItems = function(data, appInstance) {
     function renderItemSlot(item) {
         const imgSrc = item.image || null;
         const fallback = item.emoji || getIconForType(item.type);
+        const portalBadge = item.inPocketDimension
+            ? `<div style="position:absolute; top:4px; left:4px; font-size:1rem; line-height:1; filter:drop-shadow(0 0 4px var(--accent-magic));" title="In Pocket Dimension">🌀</div>`
+            : '';
         return `
             <div class="item-slot ${item.rarity}" data-id="${item.id}"
                  data-name="${(item.name || '').toLowerCase()}"
                  data-rarity="${item.rarity || ''}"
-                 style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:0.75rem 0.5rem; gap:0.4rem;">
+                 style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:0.75rem 0.5rem; gap:0.4rem; position:relative;">
+                ${portalBadge}
                 ${imgSrc
                     ? `<img src="${imgSrc}" alt="${item.name}" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--panel-border);">`
                     : `<div style="font-size:2.5rem;">${fallback}</div>`
@@ -76,11 +80,9 @@ window.renderItems = function(data, appInstance) {
     function renderCategories(itemList) {
         const catContainer = container.querySelector('#items-by-category');
         catContainer.innerHTML = '';
-
         CATEGORIES.forEach(cat => {
             const items = itemList.filter(item => getItemCategory(item) === cat);
             if (items.length === 0) return;
-
             const section = document.createElement('div');
             section.style.marginBottom = '2.5rem';
             section.innerHTML = `
@@ -91,21 +93,17 @@ window.renderItems = function(data, appInstance) {
             `;
             catContainer.appendChild(section);
         });
-
-        // Bind interactions after render
         bindSlots();
     }
 
     function applyFilters() {
         const searchVal = container.querySelector('#item-search').value.toLowerCase();
         const rarityVal = container.querySelector('#item-rarity-filter').value.toLowerCase();
-
         const filtered = data.items.filter(item => {
             const matchSearch = !searchVal || (item.name || '').toLowerCase().includes(searchVal);
             const matchRarity = !rarityVal || (item.rarity || '') === rarityVal;
             return matchSearch && matchRarity;
         });
-
         renderCategories(filtered);
     }
 
@@ -122,6 +120,7 @@ window.renderItems = function(data, appInstance) {
                     <h4 style="color:${getRarityColor(item.rarity)}; margin-bottom:0.5rem;">${item.name}</h4>
                     <p style="font-size:0.8rem; margin-bottom:0.5rem;"><em>${item.rarity ? item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1) : ''} ${getItemCategory(item)}</em></p>
                     <p style="font-size:0.8rem; color:var(--text-muted);">${item.description || ''}</p>
+                    ${item.inPocketDimension ? '<p style="font-size:0.75rem; color:var(--accent-magic); margin-top:0.4rem;">🌀 In Pocket Dimension</p>' : ''}
                 `);
             });
             slot.addEventListener('mousemove', (e) => appInstance.moveTooltip(e));
@@ -132,8 +131,9 @@ window.renderItems = function(data, appInstance) {
                 const imgSrc = item.image || null;
                 const fallback = item.emoji || getIconForType(item.type);
                 appInstance.openModal(`
-                    <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-bottom:1rem;">
                         <button id="edit-item-modal-btn" class="btn" style="background:var(--panel-border);">✏️ Edit Item</button>
+                        <button id="delete-item-modal-btn" class="btn" style="background:var(--danger);">🗑️ Delete</button>
                     </div>
                     <div style="text-align:center; margin-bottom:2rem;">
                         ${imgSrc
@@ -142,24 +142,32 @@ window.renderItems = function(data, appInstance) {
                         }
                         <h2 style="font-size:3rem; color:${getRarityColor(item.rarity)}; margin-top:1rem;">${item.name}</h2>
                         <h4 style="color:var(--text-muted); text-transform:uppercase; letter-spacing:2px;">${item.rarity || ''} ${getItemCategory(item)}</h4>
+                        ${item.inPocketDimension ? `<div style="color:var(--accent-magic); margin-top:0.5rem; font-size:0.9rem;">🌀 In Pocket Dimension</div>` : ''}
                     </div>
-                    
                     <div style="background:var(--bg-dark); padding:2rem; border-radius:var(--radius-md); border:1px solid ${getRarityColor(item.rarity)}; border-left:4px solid ${getRarityColor(item.rarity)};">
                         <h3 class="text-gold" style="margin-bottom:1rem;">Effects &amp; Stats</h3>
                         <p style="font-size:1.1rem; margin-bottom:2rem; font-style:italic; line-height:1.7;">"${item.description || 'No description.'}"</p>
-                        
                         <h3 class="text-gold" style="margin-bottom:1rem;">Lore &amp; History</h3>
                         <p style="color:var(--text-muted); line-height:1.6;">${item.history || 'No history recorded.'}</p>
                     </div>
                 `, (modalBody) => {
-                    const editBtn = modalBody.querySelector('#edit-item-modal-btn');
-                    if (editBtn) editBtn.addEventListener('click', () => openEditItemModal(item));
+                    modalBody.querySelector('#edit-item-modal-btn').addEventListener('click', () => openEditItemModal(item));
+                    modalBody.querySelector('#delete-item-modal-btn').addEventListener('click', () => {
+                        if (confirm(`Delete "${item.name}"?`)) {
+                            const idx = data.items.findIndex(i => i.id === item.id);
+                            if (idx !== -1) data.items.splice(idx, 1);
+                            appInstance.closeModal();
+                            applyFilters();
+                        }
+                    });
                 });
             });
         });
     }
 
     function openEditItemModal(item) {
+        const EMOJIS = ['🗡️','🛡️','🧪','🔮','📜','💍','💎','🏹','🪓','🦯','🗝️','👑','🎭','⚗️','🧲','🪬','🗺️','🔱','🪄','🎁'];
+        let selectedEmoji = item.emoji || EMOJIS[0];
         appInstance.openModal(`
             <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit Item: ${item.name}</h2>
             <div style="display:flex; gap:1rem; flex-wrap:wrap;">
@@ -184,15 +192,17 @@ window.renderItems = function(data, appInstance) {
                         <option value="Consumables" ${getItemCategory(item) === 'Consumables' ? 'selected' : ''}>Consumables</option>
                         <option value="Misc" ${getItemCategory(item) === 'Misc' ? 'selected' : ''}>Misc</option>
                     </select>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin-top:0.5rem;">
+                        <input type="checkbox" id="ei-pocket" ${item.inPocketDimension ? 'checked' : ''} style="width:auto; margin:0;" />
+                        <span>🌀 In Pocket Dimension</span>
+                    </label>
                 </div>
                 <div style="flex:1; min-width:200px;">
                     <label>Item Image URL</label>
-                    <input type="text" id="ei-image" placeholder="https://... (leave blank to use emoji)" value="${item.image || ''}" />
-                    <label>Fallback Emoji (if no image URL)</label>
+                    <input type="text" id="ei-image" placeholder="https://... (leave blank for emoji)" value="${item.image || ''}" />
+                    <label>Fallback Emoji</label>
                     <div class="emoji-grid" id="ei-emoji-picker" style="margin-bottom:0.5rem;">
-                        ${['🗡️','🛡️','🧪','🔮','📜','💍','💎','🏹','🪓','🦯','🗝️','👑','🎭','⚗️','🧲','🪬','🗺️','🔱','🪄','🎁'].map(em => 
-                            `<button type="button" class="emoji-btn ${(item.emoji || '🗡️') === em ? 'selected' : ''}" data-emoji="${em}">${em}</button>`
-                        ).join('')}
+                        ${EMOJIS.map(em => `<button type="button" class="emoji-btn ${selectedEmoji === em ? 'selected' : ''}" data-emoji="${em}">${em}</button>`).join('')}
                     </div>
                     <label>Description / Effects</label>
                     <textarea id="ei-desc" rows="2">${item.description || ''}</textarea>
@@ -204,7 +214,6 @@ window.renderItems = function(data, appInstance) {
                 <button id="save-ei-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
             </div>
         `, (editBody) => {
-            let selectedEmoji = item.emoji || '🗡️';
             editBody.querySelectorAll('.emoji-btn').forEach(pbtn => {
                 pbtn.addEventListener('click', (ev) => {
                     editBody.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
@@ -212,7 +221,6 @@ window.renderItems = function(data, appInstance) {
                     selectedEmoji = ev.currentTarget.dataset.emoji;
                 });
             });
-
             editBody.querySelector('#save-ei-btn').addEventListener('click', () => {
                 item.name = editBody.querySelector('#ei-name').value;
                 item.rarity = editBody.querySelector('#ei-rarity').value;
@@ -222,8 +230,9 @@ window.renderItems = function(data, appInstance) {
                 item.history = editBody.querySelector('#ei-history').value;
                 item.image = editBody.querySelector('#ei-image').value.trim() || null;
                 item.emoji = selectedEmoji;
+                item.inPocketDimension = editBody.querySelector('#ei-pocket').checked;
                 appInstance.closeModal();
-                appInstance.renderView('items');
+                applyFilters();
             });
         });
     }
@@ -231,87 +240,83 @@ window.renderItems = function(data, appInstance) {
     // Initial render
     renderCategories(data.items);
 
-    // Add Item Modal
-    const addBtn = container.querySelector('#add-item-btn');
-    if (addBtn) {
-        addBtn.addEventListener('click', () => {
-            let selectedEmoji = '🗡️';
-            appInstance.openModal(`
-                <h2 class="text-gold" style="margin-bottom:1.5rem;">Create New Item</h2>
-                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                    <div style="flex:1; min-width:200px;">
-                        <label>Item Name</label>
-                        <input type="text" id="new-item-name" placeholder="E.g. Ring of Shadows" />
-                        <label>Rarity</label>
-                        <select id="new-item-rarity">
-                            <option value="common">Common</option>
-                            <option value="uncommon">Uncommon</option>
-                            <option value="rare">Rare</option>
-                            <option value="epic">Epic</option>
-                            <option value="legendary">Legendary</option>
-                        </select>
-                        <label>Category</label>
-                        <select id="new-item-category">
-                            <option value="Weapons">Weapons</option>
-                            <option value="Armour">Armour</option>
-                            <option value="Scrolls">Scrolls</option>
-                            <option value="Jewelry">Jewelry</option>
-                            <option value="Artifacts">Artifacts</option>
-                            <option value="Consumables">Consumables</option>
-                            <option value="Misc">Misc</option>
-                        </select>
-                    </div>
-                    <div style="flex:1; min-width:200px;">
-                        <label>Item Image URL</label>
-                        <input type="text" id="new-item-image" placeholder="https://... (leave blank to use emoji)" />
-                        <label>Fallback Emoji (if no image URL)</label>
-                        <div class="emoji-grid" id="emoji-picker">
-                            ${['🗡️','🛡️','🧪','🔮','📜','💍','💎','🏹','🪓','🦯','🗝️','👑','🎭','⚗️','🧲','🪬','🗺️','🔱','🪄','🎁'].map(e => 
-                                `<button type="button" class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" data-emoji="${e}">${e}</button>`
-                            ).join('')}
-                        </div>
-                        <label>Description / Effects</label>
-                        <textarea id="new-item-desc" rows="2" placeholder="What does it do?"></textarea>
-                    </div>
+    // Add Item
+    container.querySelector('#add-item-btn').addEventListener('click', () => {
+        const EMOJIS = ['🗡️','🛡️','🧪','🔮','📜','💍','💎','🏹','🪓','🦯','🗝️','👑','🎭','⚗️','🧲','🪬','🗺️','🔱','🪄','🎁'];
+        let selectedEmoji = EMOJIS[0];
+        appInstance.openModal(`
+            <h2 class="text-gold" style="margin-bottom:1.5rem;">Create New Item</h2>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <label>Item Name</label>
+                    <input type="text" id="new-item-name" placeholder="E.g. Ring of Shadows" />
+                    <label>Rarity</label>
+                    <select id="new-item-rarity">
+                        <option value="common">Common</option>
+                        <option value="uncommon">Uncommon</option>
+                        <option value="rare">Rare</option>
+                        <option value="epic">Epic</option>
+                        <option value="legendary">Legendary</option>
+                    </select>
+                    <label>Category</label>
+                    <select id="new-item-category">
+                        <option value="Weapons">Weapons</option>
+                        <option value="Armour">Armour</option>
+                        <option value="Scrolls">Scrolls</option>
+                        <option value="Jewelry">Jewelry</option>
+                        <option value="Artifacts">Artifacts</option>
+                        <option value="Consumables">Consumables</option>
+                        <option value="Misc">Misc</option>
+                    </select>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin-top:0.5rem;">
+                        <input type="checkbox" id="new-item-pocket" style="width:auto; margin:0;" />
+                        <span>🌀 In Pocket Dimension</span>
+                    </label>
                 </div>
-                <label>Lore &amp; History</label>
-                <textarea id="new-item-history" rows="3" placeholder="Where did it come from?"></textarea>
-                <div style="text-align:right; margin-top:1rem;">
-                    <button id="save-item-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Item</button>
+                <div style="flex:1; min-width:200px;">
+                    <label>Item Image URL</label>
+                    <input type="text" id="new-item-image" placeholder="https://... (leave blank for emoji)" />
+                    <label>Fallback Emoji</label>
+                    <div class="emoji-grid" id="emoji-picker">
+                        ${EMOJIS.map(e => `<button type="button" class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" data-emoji="${e}">${e}</button>`).join('')}
+                    </div>
+                    <label>Description / Effects</label>
+                    <textarea id="new-item-desc" rows="2" placeholder="What does it do?"></textarea>
                 </div>
-            `, (modalBody) => {
-                modalBody.querySelectorAll('.emoji-btn').forEach(pbtn => {
-                    pbtn.addEventListener('click', (e) => {
-                        modalBody.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-                        e.currentTarget.classList.add('selected');
-                        selectedEmoji = e.currentTarget.dataset.emoji;
-                    });
-                });
-
-                modalBody.querySelector('#save-item-btn').addEventListener('click', () => {
-                    const name = modalBody.querySelector('#new-item-name').value || 'Unknown Item';
-                    const rarity = modalBody.querySelector('#new-item-rarity').value;
-                    const category = modalBody.querySelector('#new-item-category').value;
-                    const desc = modalBody.querySelector('#new-item-desc').value;
-                    const hist = modalBody.querySelector('#new-item-history').value;
-                    const imageUrl = modalBody.querySelector('#new-item-image').value.trim();
-
-                    data.items.unshift({
-                        id: 'i' + Date.now(),
-                        name, rarity,
-                        category, type: category.toLowerCase(),
-                        description: desc,
-                        history: hist,
-                        image: imageUrl || null,
-                        emoji: selectedEmoji
-                    });
-
-                    appInstance.closeModal();
-                    appInstance.renderView('items');
+            </div>
+            <label>Lore &amp; History</label>
+            <textarea id="new-item-history" rows="3" placeholder="Where did it come from?"></textarea>
+            <div style="text-align:right; margin-top:1rem;">
+                <button id="save-item-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Item</button>
+            </div>
+        `, (modalBody) => {
+            modalBody.querySelectorAll('.emoji-btn').forEach(pbtn => {
+                pbtn.addEventListener('click', (e) => {
+                    modalBody.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+                    e.currentTarget.classList.add('selected');
+                    selectedEmoji = e.currentTarget.dataset.emoji;
                 });
             });
+            modalBody.querySelector('#save-item-btn').addEventListener('click', () => {
+                const name = modalBody.querySelector('#new-item-name').value || 'Unknown Item';
+                const rarity = modalBody.querySelector('#new-item-rarity').value;
+                const category = modalBody.querySelector('#new-item-category').value;
+                const imageUrl = modalBody.querySelector('#new-item-image').value.trim();
+                data.items.unshift({
+                    id: 'i' + Date.now(),
+                    name, rarity,
+                    category, type: category.toLowerCase(),
+                    description: modalBody.querySelector('#new-item-desc').value,
+                    history: modalBody.querySelector('#new-item-history').value,
+                    image: imageUrl || null,
+                    emoji: selectedEmoji,
+                    inPocketDimension: modalBody.querySelector('#new-item-pocket').checked
+                });
+                appInstance.closeModal();
+                applyFilters();
+            });
         });
-    }
+    });
 
     return container;
 }
