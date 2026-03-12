@@ -2,39 +2,37 @@ window.renderItems = function(data, appInstance) {
     const container = document.createElement('div');
     container.className = 'items-container fade-in';
 
+    const CATEGORIES = ['Weapons', 'Armour', 'Scrolls', 'Jewelry', 'Artifacts', 'Consumables', 'Misc'];
+
     container.innerHTML = `
         <div class="section-header">
-            <h2 class="section-title">Items & Loot</h2>
-            <div style="display:flex; justify-content:space-between; align-items:center; width:65%; gap:1rem;">
-                <input type="text" placeholder="Search items..." style="flex:1; padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin-bottom:0;" />
-                <select style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin-bottom:0;">
-                    <option>All Rarities</option>
-                    <option>Common</option>
-                    <option>Uncommon</option>
-                    <option>Rare</option>
-                    <option>Epic</option>
-                    <option>Legendary</option>
+            <h2 class="section-title">Items &amp; Loot</h2>
+            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                <input type="text" id="item-search" placeholder="Search items..." style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin-bottom:0; width:200px;" />
+                <select id="item-rarity-filter" style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin-bottom:0;">
+                    <option value="">All Rarities</option>
+                    <option value="common">Common</option>
+                    <option value="uncommon">Uncommon</option>
+                    <option value="rare">Rare</option>
+                    <option value="epic">Epic</option>
+                    <option value="legendary">Legendary</option>
                 </select>
                 <button id="add-item-btn" class="btn" style="white-space:nowrap;">+ Add Item</button>
             </div>
         </div>
-        
-        <div class="item-grid" style="grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:1.5rem;">
-            ${data.items.map(item => `
-                <div class="item-slot ${item.rarity}" data-id="${item.id}">
-                    <div style="text-align:center;">
-                        <div style="font-size:2.5rem; margin-bottom:0.5rem;">${item.emoji || getIconForType(item.type)}</div>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
+
+        <div id="items-by-category" style="margin-top:1.5rem;"></div>
     `;
 
-    // Helpers
     function getIconForType(type) {
-        if (type === 'weapon') return '🗡️';
-        if (type === 'consumable') return '🧪';
-        if (type === 'armor') return '🛡️';
+        if (!type) return null;
+        const t = type.toLowerCase();
+        if (t === 'weapons' || t === 'weapon') return '🗡️';
+        if (t === 'consumables' || t === 'consumable') return '🧪';
+        if (t === 'armour' || t === 'armor') return '🛡️';
+        if (t === 'scrolls' || t === 'scroll') return '📜';
+        if (t === 'jewelry') return '💍';
+        if (t === 'artifacts' || t === 'artifact') return '🔮';
         return '📦';
     }
 
@@ -47,65 +45,203 @@ window.renderItems = function(data, appInstance) {
         return '#888';
     }
 
-    // Interaction Tooltips and Modals
-    const slots = container.querySelectorAll('.item-slot');
-    
-    slots.forEach(slot => {
-        const item = data.items.find(i => i.id === slot.dataset.id);
-        
-        // Tooltips
-        slot.addEventListener('mouseenter', (e) => {
-            const html = `
-                <h4 style="color:${getRarityColor(item.rarity)}; margin-bottom:0.5rem;">${item.name}</h4>
-                <p style="font-size:0.8rem; margin-bottom:0.5rem;"><em>${item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1)} ${item.type}</em></p>
-                <p style="font-size:0.8rem; color:var(--text-muted);">${item.description}</p>
+    function getItemCategory(item) {
+        const cat = (item.category || item.type || 'misc').toLowerCase();
+        if (cat === 'weapon' || cat === 'weapons') return 'Weapons';
+        if (cat === 'armor' || cat === 'armour') return 'Armour';
+        if (cat === 'scroll' || cat === 'scrolls') return 'Scrolls';
+        if (cat === 'jewelry') return 'Jewelry';
+        if (cat === 'artifact' || cat === 'artifacts') return 'Artifacts';
+        if (cat === 'consumable' || cat === 'consumables') return 'Consumables';
+        return 'Misc';
+    }
+
+    function renderItemSlot(item) {
+        const imgSrc = item.image || null;
+        const fallback = item.emoji || getIconForType(item.type);
+        return `
+            <div class="item-slot ${item.rarity}" data-id="${item.id}"
+                 data-name="${(item.name || '').toLowerCase()}"
+                 data-rarity="${item.rarity || ''}"
+                 style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:0.75rem 0.5rem; gap:0.4rem;">
+                ${imgSrc
+                    ? `<img src="${imgSrc}" alt="${item.name}" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--panel-border);">`
+                    : `<div style="font-size:2.5rem;">${fallback}</div>`
+                }
+                <div style="font-size:0.75rem; text-align:center; color:var(--text-main); line-height:1.2; word-break:break-word;">${item.name}</div>
+            </div>
+        `;
+    }
+
+    function renderCategories(itemList) {
+        const catContainer = container.querySelector('#items-by-category');
+        catContainer.innerHTML = '';
+
+        CATEGORIES.forEach(cat => {
+            const items = itemList.filter(item => getItemCategory(item) === cat);
+            if (items.length === 0) return;
+
+            const section = document.createElement('div');
+            section.style.marginBottom = '2.5rem';
+            section.innerHTML = `
+                <h3 style="color:var(--accent-gold); border-bottom:2px solid var(--accent-gold); padding-bottom:0.4rem; margin-bottom:1rem;">${cat}</h3>
+                <div class="item-grid" style="grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:1.5rem;">
+                    ${items.map(item => renderItemSlot(item)).join('')}
+                </div>
             `;
-            appInstance.showTooltip(e, html);
-        });
-        
-        slot.addEventListener('mousemove', (e) => {
-            appInstance.moveTooltip(e);
-        });
-        
-        slot.addEventListener('mouseleave', () => {
-            appInstance.hideTooltip();
+            catContainer.appendChild(section);
         });
 
-        // Modals
-        slot.addEventListener('click', () => {
-            appInstance.hideTooltip();
-            appInstance.openModal(`
-                <div style="text-align:center; margin-bottom:2rem;">
-                    <div style="font-size:5rem; text-shadow:0 0 20px ${getRarityColor(item.rarity)};">${item.emoji || getIconForType(item.type)}</div>
-                    <h2 style="font-size:3rem; color:${getRarityColor(item.rarity)}; margin-top:1rem;">${item.name}</h2>
-                    <h4 style="color:var(--text-muted); text-transform:uppercase; letter-spacing:2px;">${item.rarity} ${item.type}</h4>
-                </div>
-                
-                <div style="background:rgba(0,0,0,0.4); padding:2rem; border-radius:var(--radius-md); border:1px solid ${getRarityColor(item.rarity)}; border-left:4px solid ${getRarityColor(item.rarity)};">
-                    <h3 class="text-gold" style="margin-bottom:1rem;">Effects & Stats</h3>
-                    <p style="font-size:1.2rem; margin-bottom:2rem; font-style:italic;">"${item.description}"</p>
+        // Bind interactions after render
+        bindSlots();
+    }
+
+    function applyFilters() {
+        const searchVal = container.querySelector('#item-search').value.toLowerCase();
+        const rarityVal = container.querySelector('#item-rarity-filter').value.toLowerCase();
+
+        const filtered = data.items.filter(item => {
+            const matchSearch = !searchVal || (item.name || '').toLowerCase().includes(searchVal);
+            const matchRarity = !rarityVal || (item.rarity || '') === rarityVal;
+            return matchSearch && matchRarity;
+        });
+
+        renderCategories(filtered);
+    }
+
+    container.querySelector('#item-search').addEventListener('input', applyFilters);
+    container.querySelector('#item-rarity-filter').addEventListener('change', applyFilters);
+
+    function bindSlots() {
+        container.querySelectorAll('.item-slot').forEach(slot => {
+            const item = data.items.find(i => i.id === slot.dataset.id);
+            if (!item) return;
+
+            slot.addEventListener('mouseenter', (e) => {
+                appInstance.showTooltip(e, `
+                    <h4 style="color:${getRarityColor(item.rarity)}; margin-bottom:0.5rem;">${item.name}</h4>
+                    <p style="font-size:0.8rem; margin-bottom:0.5rem;"><em>${item.rarity ? item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1) : ''} ${getItemCategory(item)}</em></p>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">${item.description || ''}</p>
+                `);
+            });
+            slot.addEventListener('mousemove', (e) => appInstance.moveTooltip(e));
+            slot.addEventListener('mouseleave', () => appInstance.hideTooltip());
+
+            slot.addEventListener('click', () => {
+                appInstance.hideTooltip();
+                const imgSrc = item.image || null;
+                const fallback = item.emoji || getIconForType(item.type);
+                appInstance.openModal(`
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+                        <button id="edit-item-modal-btn" class="btn" style="background:var(--panel-border);">✏️ Edit Item</button>
+                    </div>
+                    <div style="text-align:center; margin-bottom:2rem;">
+                        ${imgSrc
+                            ? `<img src="${imgSrc}" alt="${item.name}" style="width:120px; height:120px; object-fit:cover; border-radius:12px; border:3px solid ${getRarityColor(item.rarity)}; box-shadow:0 10px 20px rgba(0,0,0,0.5);">`
+                            : `<div style="font-size:5rem; text-shadow:0 0 20px ${getRarityColor(item.rarity)};">${fallback}</div>`
+                        }
+                        <h2 style="font-size:3rem; color:${getRarityColor(item.rarity)}; margin-top:1rem;">${item.name}</h2>
+                        <h4 style="color:var(--text-muted); text-transform:uppercase; letter-spacing:2px;">${item.rarity || ''} ${getItemCategory(item)}</h4>
+                    </div>
                     
-                    <h3 class="text-gold" style="margin-bottom:1rem;">Lore & History</h3>
-                    <p style="color:var(--text-muted); line-height:1.6;">${item.history}</p>
-                </div>
-            `);
+                    <div style="background:var(--bg-dark); padding:2rem; border-radius:var(--radius-md); border:1px solid ${getRarityColor(item.rarity)}; border-left:4px solid ${getRarityColor(item.rarity)};">
+                        <h3 class="text-gold" style="margin-bottom:1rem;">Effects &amp; Stats</h3>
+                        <p style="font-size:1.1rem; margin-bottom:2rem; font-style:italic; line-height:1.7;">"${item.description || 'No description.'}"</p>
+                        
+                        <h3 class="text-gold" style="margin-bottom:1rem;">Lore &amp; History</h3>
+                        <p style="color:var(--text-muted); line-height:1.6;">${item.history || 'No history recorded.'}</p>
+                    </div>
+                `, (modalBody) => {
+                    const editBtn = modalBody.querySelector('#edit-item-modal-btn');
+                    if (editBtn) editBtn.addEventListener('click', () => openEditItemModal(item));
+                });
+            });
         });
-    });
+    }
 
-    // Add Item Modal Logic
+    function openEditItemModal(item) {
+        appInstance.openModal(`
+            <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit Item: ${item.name}</h2>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <label>Item Name</label>
+                    <input type="text" id="ei-name" value="${(item.name || '').replace(/"/g, '&quot;')}" />
+                    <label>Rarity</label>
+                    <select id="ei-rarity">
+                        <option value="common" ${item.rarity === 'common' ? 'selected' : ''}>Common</option>
+                        <option value="uncommon" ${item.rarity === 'uncommon' ? 'selected' : ''}>Uncommon</option>
+                        <option value="rare" ${item.rarity === 'rare' ? 'selected' : ''}>Rare</option>
+                        <option value="epic" ${item.rarity === 'epic' ? 'selected' : ''}>Epic</option>
+                        <option value="legendary" ${item.rarity === 'legendary' ? 'selected' : ''}>Legendary</option>
+                    </select>
+                    <label>Category</label>
+                    <select id="ei-category">
+                        <option value="Weapons" ${getItemCategory(item) === 'Weapons' ? 'selected' : ''}>Weapons</option>
+                        <option value="Armour" ${getItemCategory(item) === 'Armour' ? 'selected' : ''}>Armour</option>
+                        <option value="Scrolls" ${getItemCategory(item) === 'Scrolls' ? 'selected' : ''}>Scrolls</option>
+                        <option value="Jewelry" ${getItemCategory(item) === 'Jewelry' ? 'selected' : ''}>Jewelry</option>
+                        <option value="Artifacts" ${getItemCategory(item) === 'Artifacts' ? 'selected' : ''}>Artifacts</option>
+                        <option value="Consumables" ${getItemCategory(item) === 'Consumables' ? 'selected' : ''}>Consumables</option>
+                        <option value="Misc" ${getItemCategory(item) === 'Misc' ? 'selected' : ''}>Misc</option>
+                    </select>
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <label>Item Image URL</label>
+                    <input type="text" id="ei-image" placeholder="https://... (leave blank to use emoji)" value="${item.image || ''}" />
+                    <label>Fallback Emoji (if no image URL)</label>
+                    <div class="emoji-grid" id="ei-emoji-picker" style="margin-bottom:0.5rem;">
+                        ${['🗡️','🛡️','🧪','🔮','📜','💍','💎','🏹','🪓','🦯','🗝️','👑','🎭','⚗️','🧲','🪬','🗺️','🔱','🪄','🎁'].map(em => 
+                            `<button type="button" class="emoji-btn ${(item.emoji || '🗡️') === em ? 'selected' : ''}" data-emoji="${em}">${em}</button>`
+                        ).join('')}
+                    </div>
+                    <label>Description / Effects</label>
+                    <textarea id="ei-desc" rows="2">${item.description || ''}</textarea>
+                </div>
+            </div>
+            <label>Lore &amp; History</label>
+            <textarea id="ei-history" rows="3">${item.history || ''}</textarea>
+            <div style="text-align:right; margin-top:1rem;">
+                <button id="save-ei-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
+            </div>
+        `, (editBody) => {
+            let selectedEmoji = item.emoji || '🗡️';
+            editBody.querySelectorAll('.emoji-btn').forEach(pbtn => {
+                pbtn.addEventListener('click', (ev) => {
+                    editBody.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+                    ev.currentTarget.classList.add('selected');
+                    selectedEmoji = ev.currentTarget.dataset.emoji;
+                });
+            });
+
+            editBody.querySelector('#save-ei-btn').addEventListener('click', () => {
+                item.name = editBody.querySelector('#ei-name').value;
+                item.rarity = editBody.querySelector('#ei-rarity').value;
+                item.category = editBody.querySelector('#ei-category').value;
+                item.type = item.category.toLowerCase();
+                item.description = editBody.querySelector('#ei-desc').value;
+                item.history = editBody.querySelector('#ei-history').value;
+                item.image = editBody.querySelector('#ei-image').value.trim() || null;
+                item.emoji = selectedEmoji;
+                appInstance.closeModal();
+                appInstance.renderView('items');
+            });
+        });
+    }
+
+    // Initial render
+    renderCategories(data.items);
+
+    // Add Item Modal
     const addBtn = container.querySelector('#add-item-btn');
     if (addBtn) {
         addBtn.addEventListener('click', () => {
-            const emojis = ['🗡️','🛡️','🧪','🔮','📜','💍','💎','🏹','🪓','🦯','🎸','🎺','🍺','🗝️','👑','🎭'];
-            let selectedEmoji = emojis[0];
-
+            let selectedEmoji = '🗡️';
             appInstance.openModal(`
                 <h2 class="text-gold" style="margin-bottom:1.5rem;">Create New Item</h2>
                 <div style="display:flex; gap:1rem; flex-wrap:wrap;">
                     <div style="flex:1; min-width:200px;">
                         <label>Item Name</label>
                         <input type="text" id="new-item-name" placeholder="E.g. Ring of Shadows" />
-                        
                         <label>Rarity</label>
                         <select id="new-item-rarity">
                             <option value="common">Common</option>
@@ -114,64 +250,64 @@ window.renderItems = function(data, appInstance) {
                             <option value="epic">Epic</option>
                             <option value="legendary">Legendary</option>
                         </select>
-                        
-                        <label>Type</label>
-                        <select id="new-item-type">
-                            <option value="weapon">Weapon</option>
-                            <option value="armor">Armor</option>
-                            <option value="consumable">Consumable</option>
-                            <option value="misc">Miscellaneous</option>
+                        <label>Category</label>
+                        <select id="new-item-category">
+                            <option value="Weapons">Weapons</option>
+                            <option value="Armour">Armour</option>
+                            <option value="Scrolls">Scrolls</option>
+                            <option value="Jewelry">Jewelry</option>
+                            <option value="Artifacts">Artifacts</option>
+                            <option value="Consumables">Consumables</option>
+                            <option value="Misc">Misc</option>
                         </select>
                     </div>
                     <div style="flex:1; min-width:200px;">
-                        <label>Select Cover Emoji</label>
+                        <label>Item Image URL</label>
+                        <input type="text" id="new-item-image" placeholder="https://... (leave blank to use emoji)" />
+                        <label>Fallback Emoji (if no image URL)</label>
                         <div class="emoji-grid" id="emoji-picker">
-                            ${emojis.map(e => `<button type="button" class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" data-emoji="${e}">${e}</button>`).join('')}
+                            ${['🗡️','🛡️','🧪','🔮','📜','💍','💎','🏹','🪓','🦯','🗝️','👑','🎭','⚗️','🧲','🪬','🗺️','🔱','🪄','🎁'].map(e => 
+                                `<button type="button" class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" data-emoji="${e}">${e}</button>`
+                            ).join('')}
                         </div>
-                        
                         <label>Description / Effects</label>
                         <textarea id="new-item-desc" rows="2" placeholder="What does it do?"></textarea>
                     </div>
                 </div>
-                
-                <label>Lore & History</label>
+                <label>Lore &amp; History</label>
                 <textarea id="new-item-history" rows="3" placeholder="Where did it come from?"></textarea>
-                
                 <div style="text-align:right; margin-top:1rem;">
                     <button id="save-item-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Item</button>
                 </div>
             `, (modalBody) => {
-                // Initialize emoji picker interaction
-                const pickerBtns = modalBody.querySelectorAll('.emoji-btn');
-                pickerBtns.forEach(pbtn => {
+                modalBody.querySelectorAll('.emoji-btn').forEach(pbtn => {
                     pbtn.addEventListener('click', (e) => {
-                        pickerBtns.forEach(b => b.classList.remove('selected'));
+                        modalBody.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
                         e.currentTarget.classList.add('selected');
                         selectedEmoji = e.currentTarget.dataset.emoji;
                     });
                 });
 
-                // Handle Save
                 modalBody.querySelector('#save-item-btn').addEventListener('click', () => {
                     const name = modalBody.querySelector('#new-item-name').value || 'Unknown Item';
                     const rarity = modalBody.querySelector('#new-item-rarity').value;
-                    const type = modalBody.querySelector('#new-item-type').value;
+                    const category = modalBody.querySelector('#new-item-category').value;
                     const desc = modalBody.querySelector('#new-item-desc').value;
                     const hist = modalBody.querySelector('#new-item-history').value;
-                    
-                    const newItem = {
-                        id: 'i' + (Date.now()),
-                        name: name,
-                        rarity: rarity,
-                        type: type,
+                    const imageUrl = modalBody.querySelector('#new-item-image').value.trim();
+
+                    data.items.unshift({
+                        id: 'i' + Date.now(),
+                        name, rarity,
+                        category, type: category.toLowerCase(),
                         description: desc,
                         history: hist,
+                        image: imageUrl || null,
                         emoji: selectedEmoji
-                    };
-                    
-                    data.items.unshift(newItem); // Add to top of list
+                    });
+
                     appInstance.closeModal();
-                    appInstance.renderView('items'); // Remount view
+                    appInstance.renderView('items');
                 });
             });
         });

@@ -2,42 +2,38 @@ window.renderJournal = function(data, appInstance) {
     const container = document.createElement('div');
     container.className = 'journal-container fade-in';
 
+    // Sort history by sessionNumber descending (highest first)
+    const sortedHistory = [...(data.history || [])].sort((a, b) => (b.sessionNumber || 0) - (a.sessionNumber || 0));
+
     container.innerHTML = `
         <div class="section-header">
             <h2 class="section-title">Session Journal</h2>
-            <button class="btn">New Entry</button>
+            <button class="btn" id="new-entry-btn" style="background:var(--accent-gold); color:var(--bg-dark);">+ New Entry</button>
         </div>
         
         <div style="max-width:800px; margin:0 auto; padding-left:20px; border-left:2px solid var(--accent-gold); position:relative;">
-            ${(data.history || []).map((entry, index) => `
-                <div class="journal-entry mb-4" style="position:relative; margin-bottom:3rem;">
+            ${sortedHistory.map((entry) => `
+                <div class="journal-entry" style="position:relative; margin-bottom:3rem;">
                     <!-- Timeline Dot -->
                     <div style="position:absolute; left:-29px; top:5px; width:15px; height:15px; border-radius:50%; background:var(--bg-dark); border:3px solid var(--accent-gold); box-shadow:0 0 10px var(--accent-glow);"></div>
                     
-                    <div class="card" style="padding:2rem;">
+                    <div class="card journal-card" data-id="${entry.id}" style="padding:2rem; cursor:pointer; transition:border-color 0.2s;">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                             <div>
-                                <span class="text-gold" style="font-family:var(--font-heading); font-size:1.5rem; display:block; margin-bottom:0.5rem;">${entry.title}</span>
-                                <span style="color:var(--text-muted); font-size:0.9rem; display:block; margin-bottom:1.5rem;">Recorded on ${entry.date}</span>
+                                <span class="text-gold" style="font-family:var(--font-heading); font-size:1.5rem; display:block; margin-bottom:0.25rem;">${entry.title}</span>
+                                <span style="color:var(--text-muted); font-size:0.9rem; display:block; margin-bottom:1rem;">Recorded on ${entry.date}</span>
                             </div>
-                            <button class="btn edit-journal-btn" data-id="${entry.id}" style="font-size:0.8rem; padding:0.3rem 0.6rem;">Edit</button>
+                            <div style="display:flex; gap:0.5rem; flex-shrink:0;">
+                                <button class="btn edit-journal-btn" data-id="${entry.id}" style="font-size:0.8rem; padding:0.3rem 0.6rem;">✏️ Edit</button>
+                                <button class="btn delete-journal-btn" data-id="${entry.id}" style="font-size:0.8rem; padding:0.3rem 0.6rem; background:var(--danger);">🗑️</button>
+                            </div>
                         </div>
                         
-                        <div style="margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--panel-border);">
-                            <h4 class="text-gold" style="margin-bottom:0.5rem;">Session Summary</h4>
-                            <p style="color:var(--text-muted); line-height:1.6;">${entry.summary}</p>
+                        <div>
+                            <h4 class="text-gold" style="margin-bottom:0.5rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">Session Summary</h4>
+                            <p style="color:var(--text-muted); line-height:1.6; margin-bottom:0.75rem;">${entry.summary || 'No summary recorded.'}</p>
+                            <p style="font-size:0.8rem; color:var(--accent-gold); opacity:0.7;">📖 Click to read full notes</p>
                         </div>
-                        <div style="line-height:1.7; font-size:1rem; max-height:400px; overflow-y:auto; padding-right:1rem; margin-bottom:1rem;" class="journal-content-viewer">
-                            <h4 class="text-gold" style="margin-bottom:0.5rem;">Full Notes</h4>
-                            ${entry.content || "<p class='text-muted'>No additional notes.</p>"}
-                        </div>
-                        
-                        ${index === 0 ? `
-                            <div style="background:rgba(107, 76, 154, 0.1); border-left:4px solid var(--accent-magic); padding:1rem; border-radius:0 var(--radius-sm) var(--radius-sm) 0;">
-                                <h5 class="text-magic" style="margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">🧿 DM Notes</h5>
-                                <p style="font-style:italic; font-size:0.9rem; color:var(--text-muted);">The party missed the hidden compartment in the Mayor's desk containing the ledger.</p>
-                            </div>
-                        ` : ''}
                     </div>
                 </div>
             `).join('')}
@@ -49,30 +45,136 @@ window.renderJournal = function(data, appInstance) {
         </div>
     `;
 
-    // Interaction
-    const editBtns = container.querySelectorAll('.edit-journal-btn');
-    editBtns.forEach(btn => {
+    // --- Click to open full notes modal ---
+    container.querySelectorAll('.journal-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            // Don't open modal if edit/delete button was clicked
+            if (e.target.closest('.edit-journal-btn') || e.target.closest('.delete-journal-btn')) return;
+
+            const id = card.dataset.id;
+            const entry = data.history.find(h => h.id === id);
+            if (!entry) return;
+
+            appInstance.openModal(`
+                <div style="border-bottom:1px solid var(--panel-border); padding-bottom:1rem; margin-bottom:1.5rem;">
+                    <h2 style="color:var(--accent-gold); font-size:2rem; margin-bottom:0.25rem;">${entry.title}</h2>
+                    <span style="color:var(--text-muted); font-size:0.9rem;">Recorded on ${entry.date}</span>
+                </div>
+
+                <div style="margin-bottom:1.5rem; padding-bottom:1.5rem; border-bottom:1px solid var(--panel-border);">
+                    <h4 class="text-gold" style="margin-bottom:0.5rem;">Session Summary</h4>
+                    <p style="color:var(--text-muted); line-height:1.7;">${entry.summary || 'No summary recorded.'}</p>
+                </div>
+
+                <div>
+                    <h4 class="text-gold" style="margin-bottom:0.5rem;">Full Notes</h4>
+                    <div style="color:var(--text-muted); line-height:1.8; max-height:50vh; overflow-y:auto; padding-right:0.5rem;">
+                        ${entry.content || "<p class='text-muted' style='font-style:italic;'>No additional notes recorded.</p>"}
+                    </div>
+                </div>
+            `);
+        });
+    });
+
+    // --- New Entry Button ---
+    container.querySelector('#new-entry-btn').addEventListener('click', () => {
+        const todayFormatted = new Date().toISOString().split('T')[0]; // YYYY-MM-DD for date input
+        appInstance.openModal(`
+            <h2 class="text-gold" style="margin-bottom:1.5rem;">📜 New Session Entry</h2>
+            <div style="display:flex; gap:1rem;">
+                <div style="flex:1;">
+                    <label>Session Number</label>
+                    <input type="number" id="sj-number" placeholder="e.g. 12" min="1" />
+                </div>
+                <div style="flex:2;">
+                    <label>Session Name / Title</label>
+                    <input type="text" id="sj-title" placeholder="e.g. The Siege of Graymoor" />
+                </div>
+            </div>
+
+            <label>Date</label>
+            <input type="date" id="sj-date" value="${todayFormatted}" />
+
+            <label>Session Summary / Recap</label>
+            <textarea id="sj-summary" rows="3" placeholder="A brief summary of what happened (shows on Dashboard)..."></textarea>
+
+            <label>Full Session Notes / Details</label>
+            <textarea id="sj-content" rows="6" placeholder="Detailed notes, key moments, dialogue, decisions made..."></textarea>
+
+            <div style="text-align:right; margin-top:1rem;">
+                <button id="save-sj-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Session</button>
+            </div>
+        `, (modalBody) => {
+            modalBody.querySelector('#save-sj-btn').addEventListener('click', () => {
+                const num = parseInt(modalBody.querySelector('#sj-number').value) || 0;
+                const titleInput = modalBody.querySelector('#sj-title').value || 'Untitled Session';
+                const rawDate = modalBody.querySelector('#sj-date').value;
+                const summary = modalBody.querySelector('#sj-summary').value || '';
+                const content = modalBody.querySelector('#sj-content').value || '';
+
+                // Format date nicely
+                let displayDate = rawDate;
+                if (rawDate) {
+                    const d = new Date(rawDate + 'T00:00:00');
+                    displayDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                }
+
+                const fullTitle = `Session ${num}: ${titleInput}`;
+
+                if (!data.history) data.history = [];
+                data.history.push({
+                    id: 'h' + Date.now(),
+                    title: fullTitle,
+                    date: displayDate,
+                    summary: summary,
+                    content: content.replace(/\n/g, '<br>'),
+                    sessionNumber: num
+                });
+
+                appInstance.closeModal();
+                appInstance.renderView('journal');
+            });
+        });
+    });
+
+    // --- Edit buttons ---
+    container.querySelectorAll('.edit-journal-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const id = e.currentTarget.dataset.id;
             const entry = data.history.find(h => h.id === id);
-            
+
             appInstance.openModal(`
-                <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit ${entry.title}</h2>
-                <div style="display:flex; flex-direction:column; height:60vh;">
-                    <textarea id="edit-journal-content" style="flex:1; padding:1rem; font-family:var(--font-body); font-size:1rem; line-height:1.6; resize:none;">${(entry.content || entry.summary).replace(/<br>/g, '\\n')}</textarea>
-                    
-                    <div style="text-align:right; margin-top:1rem;">
-                        <button id="save-journal-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
-                    </div>
+                <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit: ${entry.title}</h2>
+                <label>Session Summary / Recap</label>
+                <textarea id="edit-journal-summary" rows="3">${entry.summary || ''}</textarea>
+                <label>Full Notes</label>
+                <textarea id="edit-journal-content" style="padding:1rem; font-family:var(--font-body); font-size:1rem; line-height:1.6; resize:vertical; min-height:200px;">${(entry.content || '').replace(/<br>/g, '\n')}</textarea>
+                <div style="text-align:right; margin-top:1rem;">
+                    <button id="save-journal-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
                 </div>
             `, (modalBody) => {
                 modalBody.querySelector('#save-journal-btn').addEventListener('click', () => {
-                    const txt = modalBody.querySelector('#edit-journal-content').value;
-                    entry.content = txt.replace(/\\n/g, '<br>'); // update array reference directly
+                    entry.summary = modalBody.querySelector('#edit-journal-summary').value;
+                    entry.content = modalBody.querySelector('#edit-journal-content').value.replace(/\n/g, '<br>');
                     appInstance.closeModal();
                     appInstance.renderView('journal');
                 });
             });
+        });
+    });
+
+    // --- Delete buttons ---
+    container.querySelectorAll('.delete-journal-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = e.currentTarget.dataset.id;
+            const entry = data.history.find(h => h.id === id);
+            if (confirm(`Delete "${entry.title}"?`)) {
+                const idx = data.history.findIndex(h => h.id === id);
+                if (idx !== -1) data.history.splice(idx, 1);
+                appInstance.renderView('journal');
+            }
         });
     });
 

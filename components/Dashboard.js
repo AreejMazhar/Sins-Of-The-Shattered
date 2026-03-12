@@ -2,96 +2,114 @@ window.renderDashboard = function(data, appInstance) {
     const container = document.createElement('div');
     container.className = 'dashboard-container fade-in';
 
+    // Calculate total party gold
+    const totalGold = data.characters.reduce((sum, c) => sum + (Number(c.gold) || 0), 0);
+
     container.innerHTML = `
         <div class="section-header">
             <h2 class="section-title">Campaign Dashboard</h2>
-            <button class="btn" id="start-session-btn">Start Session</button>
         </div>
 
         <div class="dashboard-grid">
-            <!-- Left Column: Quests and History -->
+            <!-- Left Column: Recap + Quests -->
             <div class="dash-col-left">
-                <!-- Active Quests -->
-                <div class="widget">
-                    <h3 class="widget-title"><span class="text-gold">⚔️</span> Active Quests</h3>
-                    <div class="grid-cards" id="dash-quests-grid"></div>
-                </div>
-
-                <!-- Session History / Recap -->
+                <!-- Session History / Recap (moved above quests) -->
                 <div class="widget">
                     <h3 class="widget-title" style="display:flex; justify-content:space-between; align-items:center;">
                         <span><span class="text-gold">📜</span> Latest Session Recap</span>
                     </h3>
-                    <div class="history-list" id="dash-recap-container">
-                        <!-- Populated dynamic latest session recap -->
-                    </div>
+                    <div class="history-list" id="dash-recap-container"></div>
+                </div>
+
+                <!-- Active Quests -->
+                <div class="widget">
+                    <h3 class="widget-title"><span class="text-gold">⚔️</span> Active Quests</h3>
+                    <div id="dash-quests-grid"></div>
                 </div>
             </div>
 
-            <!-- Right Column: Party and Discoveries -->
+            <!-- Right Column: Party and Quotes -->
             <div class="dash-col-right">
                 <!-- Party Members -->
                 <div class="widget">
-                    <h3 class="widget-title"><span class="text-gold">🛡️</span> The Party</h3>
+                    <h3 class="widget-title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span><span class="text-gold">🛡️</span> The Party</span>
+                        <span style="font-size:0.85rem; color:var(--accent-gold); background:rgba(0,0,0,0.3); padding:0.2rem 0.7rem; border-radius:10px; border:1px solid var(--accent-gold);">
+                            🪙 Party Gold: <strong>${totalGold.toLocaleString()} gp</strong>
+                        </span>
+                    </h3>
                     <div class="party-list">
                         ${data.characters.map(char => `
                             <div class="party-member card" data-id="${char.id}">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <img src="${char.image}" alt="${char.name}" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--accent-gold);">
-                                    <div>
-                                        <strong>${char.name}</strong>
-                                        <div style="font-size:0.8rem; color:var(--text-muted)">Lvl ${char.level} ${char.class}</div>
+                                <div style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <img src="${char.image}" alt="${char.name}" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--accent-gold);">
+                                        <div>
+                                            <strong>${char.name}</strong>
+                                            <div style="font-size:0.8rem; color:var(--text-muted)">Lvl ${char.level} ${char.class}</div>
+                                        </div>
                                     </div>
+                                    <div style="font-size:0.85rem; color:var(--accent-gold); white-space:nowrap;">🪙 ${(char.gold || 0).toLocaleString()}</div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
 
-                <!-- Recent Discoveries & Quotes -->
+                <!-- Latest Quotes -->
                 <div class="widget">
                     <h3 class="widget-title"><span class="text-gold">🧿</span> Latest Quotes</h3>
-                    <div id="dash-quotes-container" style="font-style:italic; padding:1rem; background:rgba(0,0,0,0.2); border-left:4px solid var(--accent-gold); border-radius:var(--radius-sm);">
-                        <!-- Rotating quotes script injects here -->
-                    </div>
+                    <div id="dash-quotes-container" style="font-style:italic; padding:1rem; background:rgba(0,0,0,0.2); border-left:4px solid var(--accent-gold); border-radius:var(--radius-sm);"></div>
                 </div>
             </div>
         </div>
     `;
 
-    // Populate Active Quests
+    // Populate Active Quests (split main / side, only name + location + reward)
     const questsGrid = container.querySelector('#dash-quests-grid');
     const activeQuests = data.quests.filter(q => q.status === 'active');
-    
+    const mainActive = activeQuests.filter(q => q.isMainQuest !== false);
+    const sideActive = activeQuests.filter(q => q.isMainQuest === false);
+
     if (activeQuests.length === 0) {
         questsGrid.innerHTML = `<p class="text-muted">No active quests at the moment.</p>`;
     } else {
-        activeQuests.forEach(quest => {
-            const questCard = document.createElement('div');
-            questCard.className = 'card';
-            questCard.innerHTML = `
-                <h4 style="margin-bottom:0.5rem;">${quest.title}</h4>
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">${quest.location}</p>
-                <div style="font-size:0.9rem; margin-bottom:1rem;">${quest.description}</div>
-                <div class="text-gold" style="font-size:0.8rem; font-weight:bold;">Rewards: ${quest.rewards}</div>
-            `;
-            questCard.addEventListener('click', () => {
-                // Navigate to Quests View internally
-                const questsBtn = document.querySelector('button[data-target="quests"]');
-                if (questsBtn) questsBtn.click();
-            });
-            questsGrid.appendChild(questCard);
-        });
+        let html = '';
+
+        if (mainActive.length > 0) {
+            html += `<h4 style="color:var(--accent-gold); border-bottom:1px solid var(--accent-gold); padding-bottom:0.3rem; margin:0.5rem 0 0.8rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">Main Quests</h4>`;
+            html += mainActive.map(quest => `
+                <div class="card" style="padding:0.8rem 1rem; margin-bottom:0.6rem; cursor:pointer;" onclick="document.querySelector('button[data-target=\\'quests\\']').click()">
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:0.5rem; flex-wrap:wrap;">
+                        <strong style="font-size:0.95rem;">${quest.title}</strong>
+                        <span class="text-gold" style="font-size:0.8rem; white-space:nowrap;">🏆 ${quest.rewards || 'Unknown'}</span>
+                    </div>
+                    <div style="font-size:0.82rem; color:var(--text-muted); margin-top:0.25rem;">📍 ${quest.location}</div>
+                </div>
+            `).join('');
+        }
+
+        if (sideActive.length > 0) {
+            html += `<h4 style="color:var(--text-muted); border-bottom:1px solid var(--text-muted); padding-bottom:0.3rem; margin:1rem 0 0.8rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">Side Quests</h4>`;
+            html += sideActive.map(quest => `
+                <div class="card" style="padding:0.8rem 1rem; margin-bottom:0.6rem; cursor:pointer;" onclick="document.querySelector('button[data-target=\\'quests\\']').click()">
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:0.5rem; flex-wrap:wrap;">
+                        <strong style="font-size:0.95rem;">${quest.title}</strong>
+                        <span class="text-gold" style="font-size:0.8rem; white-space:nowrap;">🏆 ${quest.rewards || 'Unknown'}</span>
+                    </div>
+                    <div style="font-size:0.82rem; color:var(--text-muted); margin-top:0.25rem;">📍 ${quest.location}</div>
+                </div>
+            `).join('');
+        }
+
+        questsGrid.innerHTML = html;
     }
 
     // Interactive Party Members
-    const partyMembers = container.querySelectorAll('.party-member');
-    partyMembers.forEach(member => {
+    container.querySelectorAll('.party-member').forEach(member => {
         member.addEventListener('click', (e) => {
             const id = e.currentTarget.dataset.id;
             const character = data.characters.find(c => c.id === id);
-            
-            // Open Character Modal
             appInstance.openModal(`
                 <div style="display:flex; gap:2rem;">
                     <img src="${character.image}" alt="${character.name}" style="width:150px; height:150px; border-radius:10px; border:2px solid var(--accent-gold);">
@@ -110,16 +128,19 @@ window.renderDashboard = function(data, appInstance) {
                         <div class="stat-value">${character.ac}</div>
                         <div class="stat-label">Armor Class</div>
                     </div>
+                    <div class="stat-box">
+                        <div class="stat-value text-gold">${(character.gold || 0).toLocaleString()}</div>
+                        <div class="stat-label">Gold (gp)</div>
+                    </div>
                 </div>
             `);
         });
     });
 
-    // Populate Latest Recap
+    // Populate Latest Recap (always index 0 — newest entry)
     const recapContainer = container.querySelector('#dash-recap-container');
     if (data.history && data.history.length > 0) {
-        // Find latest by id numeric (assuming s1, s2, s3 mapped chronologically, so last is newest, EXCEPT 17 files reversed... actually just pick last entry in array).
-        const latestSession = data.history[data.history.length - 1]; 
+        const latestSession = data.history[0];
         recapContainer.innerHTML = `
             <div class="history-item" style="padding:1rem; border:1px solid var(--panel-border); background:var(--bg-dark); border-radius:var(--radius-sm);">
                 <h4 style="margin-bottom:0.5rem; color:var(--accent-gold);">${latestSession.title}</h4>
@@ -130,22 +151,19 @@ window.renderDashboard = function(data, appInstance) {
             </div>
         `;
     } else {
-        recapContainer.innerHTML = `<p class="text-muted">No session logs available.</p>`;
+        recapContainer.innerHTML = `<p class="text-muted">No session logs available. Add one in the Session Journal!</p>`;
     }
 
     // Populate Rotating Quotes
     const quotesContainer = container.querySelector('#dash-quotes-container');
     let allQuotes = [];
     data.characters.forEach(c => {
-        if(c.quotes && c.quotes.length > 0) {
-            c.quotes.forEach(q => {
-                allQuotes.push({ text: q, author: c.name });
-            });
+        if (c.quotes && c.quotes.length > 0) {
+            c.quotes.forEach(q => allQuotes.push({ text: q, author: c.name }));
         }
     });
-    
+
     if (allQuotes.length > 0) {
-        // Pick a random quote initially
         const renderRandomQuote = () => {
             const rand = allQuotes[Math.floor(Math.random() * allQuotes.length)];
             quotesContainer.innerHTML = `
@@ -158,12 +176,8 @@ window.renderDashboard = function(data, appInstance) {
             `;
         };
         renderRandomQuote();
-        // Set rotation every 8 seconds
         let quoteInterval = setInterval(() => {
-            if(!document.contains(quotesContainer)) {
-                clearInterval(quoteInterval);
-                return;
-            }
+            if (!document.contains(quotesContainer)) { clearInterval(quoteInterval); return; }
             renderRandomQuote();
         }, 8000);
     } else {

@@ -15,6 +15,7 @@ window.renderCharacters = function(data, appInstance) {
                     <div style="display:flex; justify-content:space-around; margin-top:1rem; border-top:1px solid var(--panel-border); padding-top:1rem;">
                         <span class="text-success" title="Hit Points">❤️ ${char.hp}</span>
                         <span class="text-magic" title="Armor Class">🛡️ ${char.ac}</span>
+                        <span class="text-gold" title="Gold">🪙 ${char.gold || 0}</span>
                     </div>
                     <div style="margin-top:0.8rem; font-style:italic; font-size:0.85rem; color:var(--text-muted); text-align:center; padding:0 0.5rem;">
                         "${(char.quotes && char.quotes.length) ? char.quotes[0] : ''}"
@@ -44,8 +45,9 @@ window.renderCharacters = function(data, appInstance) {
                 <div style="display:flex; gap:2rem; flex-wrap:wrap; margin-bottom:1.5rem;">
                     <div style="flex:1; min-width:180px; text-align:center;">
                         <img id="char-modal-img" src="${char.image}" style="width:160px; height:160px; border-radius:10px; border:3px solid var(--accent-gold); object-fit:cover;">
-                        <div style="margin-top:0.5rem;">
+                        <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center;">
                             <button id="edit-char-img-btn" class="btn" style="font-size:0.75rem; padding:0.3rem 0.6rem; background:var(--panel-border);">Edit Image</button>
+                            <button id="edit-char-btn" class="btn" style="font-size:0.75rem; padding:0.3rem 0.6rem; background:var(--accent-gold); color:var(--bg-dark);">✏️ Edit</button>
                         </div>
                         <h2 style="font-size:1.8rem; margin-top:1rem;">${char.name}</h2>
                         <h4 class="text-gold">${char.race} ${char.class}</h4>
@@ -63,6 +65,16 @@ window.renderCharacters = function(data, appInstance) {
                                 <div class="stat-label">Lvl</div>
                             </div>
                         </div>
+                        <!-- Gold Tracker -->
+                        <div style="margin-top:1rem; background:var(--bg-dark); border:1px solid var(--panel-border); border-radius:var(--radius-md); padding:0.8rem;">
+                            <div style="color:var(--accent-gold); font-size:0.8rem; font-weight:bold; margin-bottom:0.4rem;">🪙 GOLD</div>
+                            <div style="display:flex; align-items:center; gap:0.4rem; justify-content:center;">
+                                <button id="gold-minus" class="btn" style="padding:0.1rem 0.5rem; min-width:auto; font-size:1rem; background:var(--danger);">−</button>
+                                <input type="number" id="gold-input" value="${char.gold || 0}" min="0" style="width:70px; text-align:center; padding:0.3rem; margin:0; font-size:1rem;" />
+                                <button id="gold-plus" class="btn" style="padding:0.1rem 0.5rem; min-width:auto; font-size:1rem; background:var(--success);">+</button>
+                            </div>
+                            <button id="gold-save" class="btn" style="width:100%; margin-top:0.5rem; padding:0.3rem; font-size:0.8rem; background:var(--accent-gold); color:var(--bg-dark);">Save Gold</button>
+                        </div>
                     </div>
                     <div style="flex:3; min-width:300px;">
                         ${tabsHtml}
@@ -71,7 +83,7 @@ window.renderCharacters = function(data, appInstance) {
                         <div id="content-bio" class="char-tab-content">
                             <p style="color:var(--text-muted); line-height:1.8; white-space:pre-wrap; font-size:0.95rem;">${char.bio || 'No biography recorded.'}</p>
                             ${char.goals ? `<h4 style="margin-top:1.5rem; margin-bottom:0.5rem;" class="text-gold">Goals</h4><p style="color:var(--text-muted); white-space:pre-wrap; font-size:0.9rem;">${char.goals}</p>` : ''}
-                            ${char.skills ? `<h4 style="margin-top:1.5rem; margin-bottom:0.5rem;" class="text-gold">Skills & Value</h4><p style="color:var(--text-muted); white-space:pre-wrap; font-size:0.9rem;">${char.skills}</p>` : ''}
+                            ${char.skills ? `<h4 style="margin-top:1.5rem; margin-bottom:0.5rem;" class="text-gold">Skills &amp; Value</h4><p style="color:var(--text-muted); white-space:pre-wrap; font-size:0.9rem;">${char.skills}</p>` : ''}
                         </div>
 
                         <!-- Appearance Tab -->
@@ -82,7 +94,7 @@ window.renderCharacters = function(data, appInstance) {
                         <!-- Personality Tab -->
                         <div id="content-persona" class="char-tab-content" style="display:none;">
                             <p style="color:var(--text-muted); line-height:1.8; white-space:pre-wrap; font-size:0.95rem;">${char.personality || 'No personality details recorded.'}</p>
-                            ${char.quirks ? `<h4 style="margin-top:1.5rem; margin-bottom:0.5rem;" class="text-gold">Quirks & Habits</h4><p style="color:var(--text-muted); white-space:pre-wrap; font-size:0.9rem;">${char.quirks}</p>` : ''}
+                            ${char.quirks ? `<h4 style="margin-top:1.5rem; margin-bottom:0.5rem;" class="text-gold">Quirks &amp; Habits</h4><p style="color:var(--text-muted); white-space:pre-wrap; font-size:0.9rem;">${char.quirks}</p>` : ''}
                         </div>
 
                         <!-- Quotes Tab -->
@@ -130,8 +142,89 @@ window.renderCharacters = function(data, appInstance) {
                         if (newUrl && newUrl.trim() !== "") {
                             char.image = newUrl.trim();
                             modalBody.querySelector('#char-modal-img').src = char.image;
-                            appInstance.renderView('characters'); // update bg view
+                            appInstance.renderView('characters');
                         }
+                    });
+                }
+
+                // Gold tracker logic
+                const goldInput = modalBody.querySelector('#gold-input');
+                const goldMinus = modalBody.querySelector('#gold-minus');
+                const goldPlus = modalBody.querySelector('#gold-plus');
+                const goldSave = modalBody.querySelector('#gold-save');
+
+                if (goldMinus) goldMinus.addEventListener('click', () => {
+                    goldInput.value = Math.max(0, parseInt(goldInput.value || 0) - 1);
+                });
+                if (goldPlus) goldPlus.addEventListener('click', () => {
+                    goldInput.value = parseInt(goldInput.value || 0) + 1;
+                });
+                if (goldSave) goldSave.addEventListener('click', () => {
+                    char.gold = parseInt(goldInput.value) || 0;
+                    appInstance.renderView('characters');
+                    appInstance.closeModal();
+                });
+
+                // Edit Character button
+                const editCharBtn = modalBody.querySelector('#edit-char-btn');
+                if (editCharBtn) {
+                    editCharBtn.addEventListener('click', () => {
+                        appInstance.openModal(`
+                            <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit: ${char.name}</h2>
+                            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                                <div style="flex:1; min-width:200px;">
+                                    <label>Name</label>
+                                    <input type="text" id="ec-name" value="${char.name.replace(/"/g, '&quot;')}" />
+                                    <label>Race</label>
+                                    <input type="text" id="ec-race" value="${(char.race || '').replace(/"/g, '&quot;')}" />
+                                    <label>Class</label>
+                                    <input type="text" id="ec-class" value="${(char.class || '').replace(/"/g, '&quot;')}" />
+                                    <label>Level</label>
+                                    <input type="number" id="ec-level" value="${char.level || 1}" min="1" max="20"/>
+                                </div>
+                                <div style="flex:1; min-width:200px;">
+                                    <label>Hit Points (HP)</label>
+                                    <input type="number" id="ec-hp" value="${char.hp || 0}" min="0" />
+                                    <label>Armor Class (AC)</label>
+                                    <input type="number" id="ec-ac" value="${char.ac || 0}" min="0" />
+                                    <label>Gold (gp)</label>
+                                    <input type="number" id="ec-gold" value="${char.gold || 0}" min="0" />
+                                </div>
+                            </div>
+                            <label>Biography</label>
+                            <textarea id="ec-bio" rows="3">${char.bio || ''}</textarea>
+                            <label>Goals</label>
+                            <textarea id="ec-goals" rows="2">${char.goals || ''}</textarea>
+                            <label>Skills &amp; Value</label>
+                            <textarea id="ec-skills" rows="2">${char.skills || ''}</textarea>
+                            <label>Appearance</label>
+                            <textarea id="ec-appearance" rows="2">${char.appearance || ''}</textarea>
+                            <label>Personality</label>
+                            <textarea id="ec-personality" rows="2">${char.personality || ''}</textarea>
+                            <label>Quirks &amp; Habits</label>
+                            <textarea id="ec-quirks" rows="2">${char.quirks || ''}</textarea>
+                            <div style="text-align:right; margin-top:1rem;">
+                                <button id="save-ec-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
+                            </div>
+                        `, (editBody) => {
+                            editBody.querySelector('#save-ec-btn').addEventListener('click', () => {
+                                char.name = editBody.querySelector('#ec-name').value;
+                                char.race = editBody.querySelector('#ec-race').value;
+                                char.class = editBody.querySelector('#ec-class').value;
+                                char.level = parseInt(editBody.querySelector('#ec-level').value) || 1;
+                                char.hp = parseInt(editBody.querySelector('#ec-hp').value) || 0;
+                                char.ac = parseInt(editBody.querySelector('#ec-ac').value) || 0;
+                                char.gold = parseInt(editBody.querySelector('#ec-gold').value) || 0;
+                                char.bio = editBody.querySelector('#ec-bio').value;
+                                char.goals = editBody.querySelector('#ec-goals').value;
+                                char.skills = editBody.querySelector('#ec-skills').value;
+                                char.appearance = editBody.querySelector('#ec-appearance').value;
+                                char.personality = editBody.querySelector('#ec-personality').value;
+                                char.quirks = editBody.querySelector('#ec-quirks').value;
+                                appInstance.closeModal();
+                                appInstance.renderView('characters');
+                            });
+                        });
                     });
                 }
 
@@ -167,7 +260,6 @@ window.renderCharacters = function(data, appInstance) {
                     });
                 }
 
-                // Event delegation for quote list buttons
                 if (quoteList) {
                     quoteList.addEventListener('click', (e) => {
                         const editBtn = e.target.closest('.edit-quote-btn');
@@ -175,8 +267,7 @@ window.renderCharacters = function(data, appInstance) {
 
                         if (editBtn) {
                             const idx = parseInt(editBtn.dataset.idx);
-                            const currentQuote = char.quotes[idx];
-                            const newQuote = prompt("Edit quote:", currentQuote);
+                            const newQuote = prompt("Edit quote:", char.quotes[idx]);
                             if (newQuote !== null && newQuote.trim() !== '') {
                                 char.quotes[idx] = newQuote.trim();
                                 renderQuotes();

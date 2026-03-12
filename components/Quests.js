@@ -106,7 +106,10 @@ window.renderQuests = function(data, appInstance) {
                 appInstance.openModal(`
                     <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:1px solid var(--panel-border); padding-bottom:1rem; margin-bottom:1.5rem;">
                         <h2 style="font-size:2.5rem; color:var(--accent-gold); margin:0;">${quest.title}</h2>
-                        <button id="edit-quest-btn" class="btn">Edit Quest</button>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button id="edit-quest-btn" class="btn">Edit Quest</button>
+                            <button id="delete-quest-btn" class="btn" style="background:var(--danger);">🗑️ Delete</button>
+                        </div>
                     </div>
                     <div style="display:grid; grid-template-columns:2fr 1fr; gap:2rem;">
                         <div>
@@ -114,13 +117,13 @@ window.renderQuests = function(data, appInstance) {
                             <p style="margin-bottom:1.5rem; line-height:1.8;">${quest.description}</p>
                             ${tasksHtml}
                         </div>
-                        <div style="background:rgba(0,0,0,0.3); padding:1.5rem; border-radius:var(--radius-md); border:1px solid var(--panel-border);">
+                        <div style="background:var(--bg-dark); padding:1.5rem; border-radius:var(--radius-md); border:1px solid var(--panel-border); height:fit-content;">
                             <p style="margin-bottom:1rem;"><strong>Status:</strong> <span style="color:${quest.status === 'active' ? 'var(--accent-gold)' : 'var(--success)'};">${quest.status.toUpperCase()}</span></p>
                             <p style="margin-bottom:1rem;"><strong>Type:</strong> ${quest.isMainQuest !== false ? 'Main Quest' : 'Side Quest'}</p>
                             <p style="margin-bottom:1rem;"><strong>Location:</strong> ${quest.location}</p>
                             <p style="margin-bottom:1rem;"><strong>Given By:</strong> ${quest.npc}</p>
-                            <p><strong>Rewards:</strong></p>
-                            <div class="text-success" style="padding:1rem; background:rgba(0,0,0,0.5); border-radius:var(--radius-sm); margin-top:0.5rem; border:1px solid var(--success);">
+                            <p style="margin-bottom:0.5rem;"><strong>Rewards:</strong></p>
+                            <div class="text-success" style="padding:1rem; background:rgba(0,0,0,0.3); border-radius:var(--radius-sm); border:1px solid var(--success);">
                                 ${quest.rewards}
                             </div>
                         </div>
@@ -133,18 +136,15 @@ window.renderQuests = function(data, appInstance) {
                             const idx = ev.target.dataset.idx;
                             quest.tasks[idx].completed = ev.target.checked;
                             
-                            // Check if all tasks are complete
                             const allDone = quest.tasks.every(t => t.completed);
                             if(allDone && quest.status === 'active') {
                                 quest.status = 'completed';
                             } else if (!allDone && quest.status === 'completed') {
                                 quest.status = 'active';
                             }
-                            // Close and re-open to refresh the view
                             appInstance.closeModal();
-                            container.querySelector('.section-header .btn.active').click(); // trigger re-filter & render
+                            container.querySelector('.section-header .btn.active').click();
                             
-                            // Delay triggering the click to open it again so it doesn't collide with closing anim
                             setTimeout(() => {
                                 const newCards = container.querySelectorAll('.quest-card');
                                 const targetCard = Array.from(newCards).find(c => c.dataset.id === quest.id);
@@ -153,11 +153,78 @@ window.renderQuests = function(data, appInstance) {
                         });
                     });
 
-                    // Edit button stub
+                    // Edit button
                     const editBtn = modalBody.querySelector('#edit-quest-btn');
                     if(editBtn) {
                         editBtn.addEventListener('click', () => {
-                            alert("Edit Quest form coming soon! For now, Edit via mockData directly.");
+                            appInstance.openModal(`
+                                <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit Quest: ${quest.title}</h2>
+                                <label>Quest Title</label>
+                                <input type="text" id="eq-title" value="${quest.title.replace(/"/g, '&quot;')}" />
+                                
+                                <div style="display:flex; gap:1rem;">
+                                    <div style="flex:1;">
+                                        <label>Location</label>
+                                        <input type="text" id="eq-location" value="${quest.location.replace(/"/g, '&quot;')}" />
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label>Quest Giver</label>
+                                        <input type="text" id="eq-npc" value="${quest.npc.replace(/"/g, '&quot;')}" />
+                                    </div>
+                                </div>
+                                
+                                <div style="display:flex; gap:1rem;">
+                                    <div style="flex:1;">
+                                        <label>Status</label>
+                                        <select id="eq-status">
+                                            <option value="active" ${quest.status === 'active' ? 'selected' : ''}>Active</option>
+                                            <option value="completed" ${quest.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                        </select>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label>Type</label>
+                                        <select id="eq-type">
+                                            <option value="main" ${quest.isMainQuest !== false ? 'selected' : ''}>Main Quest</option>
+                                            <option value="side" ${quest.isMainQuest === false ? 'selected' : ''}>Side Quest</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <label>Rewards</label>
+                                <input type="text" id="eq-rewards" value="${(quest.rewards || '').replace(/"/g, '&quot;')}" />
+                                
+                                <label>Description</label>
+                                <textarea id="eq-desc" rows="3">${quest.description}</textarea>
+                                
+                                <div style="text-align:right; margin-top:1rem;">
+                                    <button id="save-eq-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
+                                </div>
+                            `, (editBody) => {
+                                editBody.querySelector('#save-eq-btn').addEventListener('click', () => {
+                                    quest.title = editBody.querySelector('#eq-title').value;
+                                    quest.location = editBody.querySelector('#eq-location').value;
+                                    quest.npc = editBody.querySelector('#eq-npc').value;
+                                    quest.status = editBody.querySelector('#eq-status').value;
+                                    quest.isMainQuest = editBody.querySelector('#eq-type').value === 'main';
+                                    quest.rewards = editBody.querySelector('#eq-rewards').value;
+                                    quest.description = editBody.querySelector('#eq-desc').value;
+                                    appInstance.closeModal();
+                                    appInstance.renderView('quests');
+                                });
+                            });
+                        });
+                    }
+
+                    // Delete button
+                    const deleteBtn = modalBody.querySelector('#delete-quest-btn');
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', () => {
+                            if (confirm(`Are you sure you want to delete "${quest.title}"?`)) {
+                                const idx = data.quests.findIndex(q => q.id === quest.id);
+                                if (idx !== -1) data.quests.splice(idx, 1);
+                                appInstance.closeModal();
+                                appInstance.renderView('quests');
+                            }
                         });
                     }
                 });

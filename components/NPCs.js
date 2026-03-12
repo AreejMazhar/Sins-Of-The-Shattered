@@ -6,7 +6,7 @@ window.renderNPCs = function(data, appInstance) {
         <div class="section-header">
             <h2 class="section-title">NPC Database</h2>
             <div style="display:flex; justify-content:space-between; align-items:center; width:65%; gap:1rem;">
-                <input type="text" placeholder="Search NPCs..." style="flex:1; padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0;" />
+                <input type="text" id="npc-search" placeholder="Search NPCs..." style="flex:1; padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0;" />
                 <button id="add-npc-btn" class="btn" style="white-space:nowrap;">+ Add NPC</button>
             </div>
         </div>
@@ -52,109 +52,128 @@ window.renderNPCs = function(data, appInstance) {
             </div>
         `).join('');
     }
-        
 
+    // --- Search Bar Logic ---
+    const searchInput = container.querySelector('#npc-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase().trim();
+            const cards = container.querySelectorAll('.npc-card');
+            cards.forEach(card => {
+                const id = card.dataset.id;
+                const npc = data.npcs.find(n => n.id === id);
+                if (!npc) return;
+                const matches = npc.name.toLowerCase().includes(query) ||
+                                (npc.role && npc.role.toLowerCase().includes(query)) ||
+                                (npc.location && npc.location.toLowerCase().includes(query));
+                card.style.display = matches ? '' : 'none';
+            });
+        });
+    }
 
     // Interaction
-    const cards = container.querySelectorAll('.npc-card');
-    cards.forEach(card => {
-        card.addEventListener('click', (e) => {
-            const id = e.currentTarget.dataset.id;
-            const npc = data.npcs.find(n => n.id === id);
-            
-            appInstance.openModal(`
-                <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
-                    <button id="edit-npc-btn" class="btn" style="background:var(--panel-border);">✏️ Edit NPC</button>
-                </div>
-                <div style="display:flex; gap:2rem;">
-                    <div style="flex:1; text-align:center;">
-                        <img src="${npc.image}" style="width:100%; max-width:250px; border-radius:10px; border:2px solid var(--panel-border); box-shadow:0 10px 20px rgba(0,0,0,0.5);">
+    function bindCards() {
+        const cards = container.querySelectorAll('.npc-card');
+        cards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                const id = e.currentTarget.dataset.id;
+                const npc = data.npcs.find(n => n.id === id);
+                
+                appInstance.openModal(`
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+                        <button id="edit-npc-btn" class="btn" style="background:var(--panel-border);">✏️ Edit NPC</button>
                     </div>
-                    <div style="flex:2;">
-                        <h2 style="font-size:2.5rem; color:var(--text-main); border-bottom:1px solid var(--panel-border); margin-bottom:1rem; padding-bottom:0.5rem;">${npc.name}</h2>
-                        
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem;">
-                            <div>
-                                <h4 class="text-gold" style="margin-bottom:0.3rem;">Role</h4>
-                                <p>${npc.role}</p>
-                            </div>
-                            <div>
-                                <h4 class="text-gold" style="margin-bottom:0.3rem;">Location</h4>
-                                <p>${npc.location}</p>
-                            </div>
-                            <div>
-                                <h4 class="text-gold" style="margin-bottom:0.3rem;">Trait</h4>
-                                <p>${npc.trait}</p>
-                            </div>
+                    <div style="display:flex; gap:2rem;">
+                        <div style="flex:1; text-align:center;">
+                            <img src="${npc.image}" style="width:100%; max-width:250px; border-radius:10px; border:2px solid var(--panel-border); box-shadow:0 10px 20px rgba(0,0,0,0.5);">
                         </div>
-
-                        <div style="background:rgba(139, 58, 58, 0.1); border:1px solid var(--danger); padding:1.5rem; border-radius:var(--radius-md);">
-                            <h4 class="text-danger" style="margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">👁️ DM Secret</h4>
-                            <p style="font-style:italic; color:var(--text-muted);">${npc.secret}</p>
-                        </div>
-                    </div>
-                </div>
-            `, (modalBody) => {
-                modalBody.querySelector('#edit-npc-btn').addEventListener('click', () => {
-                    appInstance.openModal(`
-                        <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit NPC: ${npc.name}</h2>
-                        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                            <div style="flex:1; min-width:200px;">
-                                <label>NPC Name</label>
-                                <input type="text" id="edit-npc-name" value="${npc.name.replace(/"/g, '&quot;')}" />
-                                
-                                <label>Role / Title</label>
-                                <input type="text" id="edit-npc-role" value="${npc.role.replace(/"/g, '&quot;')}" />
-                                
-                                <label>Attitude</label>
-                                <select id="edit-npc-attitude">
-                                    <option value="Friendly" ${npc.attitude === 'Friendly' ? 'selected' : ''}>Friendly</option>
-                                    <option value="Neutral" ${npc.attitude === 'Neutral' ? 'selected' : ''}>Neutral</option>
-                                    <option value="Hostile" ${npc.attitude === 'Hostile' ? 'selected' : ''}>Hostile</option>
-                                </select>
-                            </div>
-                            <div style="flex:1; min-width:200px;">
-                                <label>Location</label>
-                                <input type="text" id="edit-npc-location" value="${npc.location.replace(/"/g, '&quot;')}" />
-                                
-                                <label>Defining Trait</label>
-                                <input type="text" id="edit-npc-trait" value="${npc.trait.replace(/"/g, '&quot;')}" />
-                                
-                                <label>Profile Image URL</label>
-                                <input type="text" id="edit-npc-image" value="${npc.image}" />
-                            </div>
-                        </div>
-                        
-                        <label>DM Secret Notes</label>
-                        <textarea id="edit-npc-secret" rows="3">${npc.secret}</textarea>
-                        
-                        <div style="text-align:right; margin-top:1rem;">
-                            <button id="save-edit-npc-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
-                        </div>
-                    `, (editBody) => {
-                        editBody.querySelector('#save-edit-npc-btn').addEventListener('click', () => {
-                            npc.name = editBody.querySelector('#edit-npc-name').value;
-                            npc.role = editBody.querySelector('#edit-npc-role').value;
-                            npc.attitude = editBody.querySelector('#edit-npc-attitude').value;
-                            npc.location = editBody.querySelector('#edit-npc-location').value;
-                            npc.trait = editBody.querySelector('#edit-npc-trait').value;
-                            npc.image = editBody.querySelector('#edit-npc-image').value;
-                            npc.secret = editBody.querySelector('#edit-npc-secret').value;
+                        <div style="flex:2;">
+                            <h2 style="font-size:2.5rem; color:var(--text-main); border-bottom:1px solid var(--panel-border); margin-bottom:1rem; padding-bottom:0.5rem;">${npc.name}</h2>
                             
-                            appInstance.closeModal();
-                            appInstance.renderView('npcs');
-                            setTimeout(() => {
-                                // Re-open the details modal to show changes
-                                const newCards = document.querySelectorAll('.npc-card');
-                                const targetCard = Array.from(newCards).find(c => c.dataset.id === id);
-                                if(targetCard) targetCard.click();
-                            }, 350);
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem;">
+                                <div>
+                                    <h4 class="text-gold" style="margin-bottom:0.3rem;">Role</h4>
+                                    <p>${npc.role}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-gold" style="margin-bottom:0.3rem;">Location</h4>
+                                    <p>${npc.location}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-gold" style="margin-bottom:0.3rem;">Trait</h4>
+                                    <p>${npc.trait}</p>
+                                </div>
+                            </div>
+
+                            <div style="background:rgba(139, 58, 58, 0.1); border:1px solid var(--danger); padding:1.5rem; border-radius:var(--radius-md);">
+                                <h4 class="text-danger" style="margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">👁️ DM Secret</h4>
+                                <p style="font-style:italic; color:var(--text-muted);">${npc.secret}</p>
+                            </div>
+                        </div>
+                    </div>
+                `, (modalBody) => {
+                    modalBody.querySelector('#edit-npc-btn').addEventListener('click', () => {
+                        appInstance.openModal(`
+                            <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit NPC: ${npc.name}</h2>
+                            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                                <div style="flex:1; min-width:200px;">
+                                    <label>NPC Name</label>
+                                    <input type="text" id="edit-npc-name" value="${npc.name.replace(/"/g, '&quot;')}" />
+                                    
+                                    <label>Role / Title</label>
+                                    <input type="text" id="edit-npc-role" value="${npc.role.replace(/"/g, '&quot;')}" />
+                                    
+                                    <label>Attitude</label>
+                                    <select id="edit-npc-attitude">
+                                        <option value="Friendly" ${npc.attitude === 'Friendly' ? 'selected' : ''}>Friendly</option>
+                                        <option value="Neutral" ${npc.attitude === 'Neutral' ? 'selected' : ''}>Neutral</option>
+                                        <option value="Hostile" ${npc.attitude === 'Hostile' ? 'selected' : ''}>Hostile</option>
+                                    </select>
+                                </div>
+                                <div style="flex:1; min-width:200px;">
+                                    <label>Location</label>
+                                    <input type="text" id="edit-npc-location" value="${npc.location.replace(/"/g, '&quot;')}" />
+                                    
+                                    <label>Defining Trait</label>
+                                    <input type="text" id="edit-npc-trait" value="${npc.trait.replace(/"/g, '&quot;')}" />
+                                    
+                                    <label>Profile Image URL</label>
+                                    <input type="text" id="edit-npc-image" value="${npc.image}" />
+                                </div>
+                            </div>
+                            
+                            <label>DM Secret Notes</label>
+                            <textarea id="edit-npc-secret" rows="3">${npc.secret}</textarea>
+                            
+                            <div style="text-align:right; margin-top:1rem;">
+                                <button id="save-edit-npc-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
+                            </div>
+                        `, (editBody) => {
+                            editBody.querySelector('#save-edit-npc-btn').addEventListener('click', () => {
+                                npc.name = editBody.querySelector('#edit-npc-name').value;
+                                npc.role = editBody.querySelector('#edit-npc-role').value;
+                                npc.attitude = editBody.querySelector('#edit-npc-attitude').value;
+                                npc.location = editBody.querySelector('#edit-npc-location').value;
+                                npc.trait = editBody.querySelector('#edit-npc-trait').value;
+                                npc.image = editBody.querySelector('#edit-npc-image').value;
+                                npc.secret = editBody.querySelector('#edit-npc-secret').value;
+                                
+                                appInstance.closeModal();
+                                appInstance.renderView('npcs');
+                                setTimeout(() => {
+                                    const newCards = document.querySelectorAll('.npc-card');
+                                    const targetCard = Array.from(newCards).find(c => c.dataset.id === id);
+                                    if(targetCard) targetCard.click();
+                                }, 350);
+                            });
                         });
                     });
                 });
             });
         });
-    });
+    }
+
+    bindCards();
 
     // Add NPC Logic
     const addBtn = container.querySelector('#add-npc-btn');
