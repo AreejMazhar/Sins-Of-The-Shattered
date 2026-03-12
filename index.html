@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D Campaign Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background Texture -->
+    <div class="background-overlay"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 style="font-size:1.2rem; line-height:1.4;">Sins of the<br>Shattered</h2>
+                <div class="separator"></div>
+            </div>
+            <nav>
+                <ul id="nav-list">
+                    <li><button data-target="dashboard" class="nav-btn active">Dashboard</button></li>
+                    <li><button data-target="characters" class="nav-btn">Characters</button></li>
+                    <li><button data-target="quests" class="nav-btn">Quest Log</button></li>
+                    <li><button data-target="items" class="nav-btn">Items & Loot</button></li>
+                    <li><button data-target="npcs" class="nav-btn">NPC Database</button></li>
+                    <li><button data-target="maps" class="nav-btn">World Maps</button></li>
+                    <li><button data-target="journal" class="nav-btn">Session Journal</button></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="theme-toggle" class="btn" style="width:100%; margin-bottom:1rem; font-size:0.9rem;">🌙 Dark Mode</button>
+                <p>v1.0.0</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="main-content">
+            <!-- Sections will be injected here via JavaScript -->
+        </main>
+    </div>
+
+    <!-- Reusable Modal Container -->
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal-content" id="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Tooltip Container -->
+    <div id="tooltip" class="tooltip hidden"></div>
+
+    <!-- Firebase Connection -->
+    <script type="module" src="firebase-config.js"></script>
+
+    <script src="data/mockData.js"></script>
+    <script src="data/sessionHistory.js"></script>
+    <script src="components/Dashboard.js"></script>
+    <script src="components/Characters.js"></script>
+    <script src="components/Quests.js"></script>
+    <script src="components/Items.js"></script>
+    <script src="components/NPCs.js"></script>
+    <script src="components/Maps.js"></script>
+    <script src="components/Journal.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
