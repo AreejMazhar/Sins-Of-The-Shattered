@@ -122,14 +122,19 @@ window.renderJournal = function(data, appInstance) {
                 const fullTitle = `Session ${num}: ${titleInput}`;
 
                 if (!data.history) data.history = [];
-                data.history.push({
+                const newEntry = {
                     id: 'h' + Date.now(),
                     title: fullTitle,
-                    date: displayDate,
+                    date_display: displayDate, // Match API column
                     summary: summary,
                     content: content.replace(/\n/g, '<br>'),
                     sessionNumber: num
-                });
+                };
+                // Fallback for JS rendering which still uses 'date'
+                newEntry.date = displayDate; 
+                
+                data.history.push(newEntry);
+                DB.save('sessions', newEntry);
 
                 appInstance.closeModal();
                 appInstance.renderView('journal');
@@ -157,6 +162,10 @@ window.renderJournal = function(data, appInstance) {
                 modalBody.querySelector('#save-journal-btn').addEventListener('click', () => {
                     entry.summary = modalBody.querySelector('#edit-journal-summary').value;
                     entry.content = modalBody.querySelector('#edit-journal-content').value.replace(/\n/g, '<br>');
+                    // Ensure date_display exists for the API
+                    if (!entry.date_display) entry.date_display = entry.date;
+                    
+                    DB.save('sessions', entry);
                     appInstance.closeModal();
                     appInstance.renderView('journal');
                 });
@@ -173,6 +182,8 @@ window.renderJournal = function(data, appInstance) {
             if (confirm(`Delete "${entry.title}"?`)) {
                 const idx = data.history.findIndex(h => h.id === id);
                 if (idx !== -1) data.history.splice(idx, 1);
+                
+                DB.delete('sessions', id);
                 appInstance.renderView('journal');
             }
         });

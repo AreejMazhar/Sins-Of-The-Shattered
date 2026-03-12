@@ -156,6 +156,7 @@ window.renderItems = function(data, appInstance) {
                         if (confirm(`Delete "${item.name}"?`)) {
                             const idx = data.items.findIndex(i => i.id === item.id);
                             if (idx !== -1) data.items.splice(idx, 1);
+                            DB.delete('items', item.id);
                             appInstance.closeModal();
                             applyFilters();
                         }
@@ -231,6 +232,9 @@ window.renderItems = function(data, appInstance) {
                 item.image = editBody.querySelector('#ei-image').value.trim() || null;
                 item.emoji = selectedEmoji;
                 item.inPocketDimension = editBody.querySelector('#ei-pocket').checked;
+                
+                DB.save('items', item);
+                
                 appInstance.closeModal();
                 applyFilters();
             });
@@ -302,7 +306,7 @@ window.renderItems = function(data, appInstance) {
                 const rarity = modalBody.querySelector('#new-item-rarity').value;
                 const category = modalBody.querySelector('#new-item-category').value;
                 const imageUrl = modalBody.querySelector('#new-item-image').value.trim();
-                data.items.unshift({
+                const newItem = {
                     id: 'i' + Date.now(),
                     name, rarity,
                     category, type: category.toLowerCase(),
@@ -311,7 +315,11 @@ window.renderItems = function(data, appInstance) {
                     image: imageUrl || null,
                     emoji: selectedEmoji,
                     inPocketDimension: modalBody.querySelector('#new-item-pocket').checked
-                });
+                };
+                
+                data.items.unshift(newItem);
+                DB.save('items', newItem);
+                
                 appInstance.closeModal();
                 applyFilters();
             });

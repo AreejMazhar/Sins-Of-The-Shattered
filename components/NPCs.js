@@ -133,6 +133,8 @@ window.renderNPCs = function(data, appInstance) {
                         npc.trait = editBody.querySelector('#edit-npc-trait').value;
                         npc.image = editBody.querySelector('#edit-npc-image').value;
                         npc.secret = editBody.querySelector('#edit-npc-secret').value;
+                        
+                        DB.save('npcs', npc);
                         appInstance.closeModal();
                         appInstance.renderView('npcs');
                         setTimeout(() => {
@@ -189,7 +191,7 @@ window.renderNPCs = function(data, appInstance) {
         `, (modalBody) => {
             modalBody.querySelector('#save-npc-btn').addEventListener('click', () => {
                 const name = modalBody.querySelector('#new-npc-name').value || 'Unknown NPC';
-                data.npcs.push({
+                const newNPC = {
                     id: 'n' + Date.now(),
                     name,
                     role: modalBody.querySelector('#new-npc-role').value,
@@ -198,7 +200,10 @@ window.renderNPCs = function(data, appInstance) {
                     trait: modalBody.querySelector('#new-npc-trait').value,
                     secret: modalBody.querySelector('#new-npc-secret').value,
                     image: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + encodeURIComponent(name)
-                });
+                };
+                data.npcs.push(newNPC);
+                DB.save('npcs', newNPC);
+                
                 appInstance.closeModal();
                 appInstance.renderView('npcs');
             });

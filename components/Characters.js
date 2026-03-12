@@ -161,6 +161,7 @@ window.renderCharacters = function(data, appInstance) {
                 });
                 if (goldSave) goldSave.addEventListener('click', () => {
                     char.gold = parseInt(goldInput.value) || 0;
+                    DB.save('characters', char);
                     appInstance.renderView('characters');
                     appInstance.closeModal();
                 });
@@ -221,6 +222,7 @@ window.renderCharacters = function(data, appInstance) {
                                 char.appearance = editBody.querySelector('#ec-appearance').value;
                                 char.personality = editBody.querySelector('#ec-personality').value;
                                 char.quirks = editBody.querySelector('#ec-quirks').value;
+                                DB.save('characters', char);
                                 appInstance.closeModal();
                                 appInstance.renderView('characters');
                             });

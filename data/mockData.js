@@ -273,7 +273,7 @@ Long-term: Uncover the grimoire's origins — who wrote it, why it was abandoned
         },
         {
             id: 'c3',
-            name: 'Durnehviir U-U',
+            name: 'Durnehviir',
             class: 'Warlock (Pact of the Spirit Lake)',
             race: 'Tiefling',
             level: 4,

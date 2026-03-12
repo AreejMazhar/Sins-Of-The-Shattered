@@ -122,6 +122,8 @@ window.renderQuests = function(data, appInstance) {
                     if (allDone && quest.status === 'active') quest.status = 'completed';
                     else if (!allDone && quest.status === 'completed') quest.status = 'active';
 
+                    // Persist to DB
+                    DB.save('quests', quest);
                     // Close current modal and re-open same quest modal (no full page re-render)
                     appInstance.closeModal();
                     setTimeout(() => openQuestModal(quest), 50);
@@ -176,8 +178,8 @@ window.renderQuests = function(data, appInstance) {
                         quest.isMainQuest = editBody.querySelector('#eq-type').value === 'main';
                         quest.rewards = editBody.querySelector('#eq-rewards').value;
                         quest.description = editBody.querySelector('#eq-desc').value;
+                        DB.save('quests', quest);
                         appInstance.closeModal();
-                        // Refresh the list
                         container.querySelector('#quests-container-body').innerHTML = renderQuestGroups(data.quests, currentFilter);
                         bindCards();
                     });
@@ -189,6 +191,7 @@ window.renderQuests = function(data, appInstance) {
                 if (confirm(`Delete "${quest.title}"?`)) {
                     const idx = data.quests.findIndex(q => q.id === quest.id);
                     if (idx !== -1) data.quests.splice(idx, 1);
+                    DB.delete('quests', quest.id);
                     appInstance.closeModal();
                     container.querySelector('#quests-container-body').innerHTML = renderQuestGroups(data.quests, currentFilter);
                     bindCards();
@@ -256,7 +259,7 @@ window.renderQuests = function(data, appInstance) {
                 const tasksArr = modalBody.querySelector('#new-quest-tasks').value
                     .split(',').map(t => ({ text: t.trim(), completed: false })).filter(t => t.text);
 
-                data.quests.push({
+                const newQuest = {
                     id: 'q' + Date.now(),
                     title, status: 'active',
                     isMainQuest: type === 'main',
@@ -264,7 +267,9 @@ window.renderQuests = function(data, appInstance) {
                     tasks: tasksArr.length > 0 ? tasksArr : null,
                     objectives: tasksArr.length > 0 ? null : ['Investigate'],
                     rewards, location, npc
-                });
+                };
+                data.quests.push(newQuest);
+                DB.save('quests', newQuest);
 
                 appInstance.closeModal();
                 container.querySelector('#quests-container-body').innerHTML = renderQuestGroups(data.quests, currentFilter);
