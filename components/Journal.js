@@ -8,14 +8,14 @@ window.renderJournal = function(data, appInstance) {
     container.innerHTML = `
         <div class="section-header">
             <h2 class="section-title">Session Journal</h2>
-            <button class="btn" id="new-entry-btn" style="background:var(--accent-gold); color:var(--bg-dark);">+ New Entry</button>
+            <button class="btn" id="new-entry-btn" style="background:var(--accent-gold); color:#fff;">+ New Entry</button>
         </div>
         
-        <div style="max-width:800px; margin:0 auto; padding-left:20px; border-left:2px solid var(--accent-gold); position:relative;">
+        <div style="max-width:800px; margin:0 auto; padding-left:20px; border-left:2px solid #e2d8f0; position:relative;">
             ${sortedHistory.map((entry) => `
                 <div class="journal-entry" style="position:relative; margin-bottom:3rem;">
                     <!-- Timeline Dot -->
-                    <div style="position:absolute; left:-29px; top:5px; width:15px; height:15px; border-radius:50%; background:var(--bg-dark); border:3px solid var(--accent-gold); box-shadow:0 0 10px var(--accent-glow);"></div>
+                    <div style="position:absolute; left:-29px; top:5px; width:15px; height:15px; border-radius:50%; background:var(--bg-dark); border:3px solid #e2d8f0; box-shadow:0 0 10px var(--accent-glow);"></div>
                     
                     <div class="card journal-card" data-id="${entry.id}" style="padding:2rem; cursor:pointer; transition:border-color 0.2s;">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -40,7 +40,7 @@ window.renderJournal = function(data, appInstance) {
             
             <div style="position:relative;">
                 <div style="position:absolute; left:-29px; top:0; width:15px; height:15px; border-radius:50%; background:var(--bg-dark); border:2px solid var(--text-muted);"></div>
-                <div style="padding-left:1.5rem; color:var(--text-muted); font-style:italic;">Beginning of the Campaign</div>
+                <div class="bg-text" style="padding-left:1.5rem; font-style:italic;">Beginning of the Campaign</div>
             </div>
         </div>
     `;
@@ -77,70 +77,62 @@ window.renderJournal = function(data, appInstance) {
     });
 
     // --- New Entry Button ---
-    container.querySelector('#new-entry-btn').addEventListener('click', () => {
-        const todayFormatted = new Date().toISOString().split('T')[0]; // YYYY-MM-DD for date input
-        appInstance.openModal(`
-            <h2 class="text-gold" style="margin-bottom:1.5rem;">📜 New Session Entry</h2>
-            <div style="display:flex; gap:1rem;">
-                <div style="flex:1;">
-                    <label>Session Number</label>
-                    <input type="number" id="sj-number" placeholder="e.g. 12" min="1" />
+        container.querySelector('#new-entry-btn').addEventListener('click', () => {
+            const todayFormatted = new Date().toISOString().split('T')[0]; // YYYY-MM-DD for date input
+            appInstance.openModal(`
+                <h2 class="text-gold" style="margin-bottom:1.5rem;">📜 New Session Entry</h2>
+                <div style="display:flex; gap:1rem;">
+                    <div style="flex:1;">
+                        <label>Session Number</label>
+                        <input type="number" id="sj-number" placeholder="e.g. 12" min="1" />
+                    </div>
+                    <div style="flex:2;">
+                        <label>Session Name / Title</label>
+                        <input type="text" id="sj-title" placeholder="e.g. The Siege of Graymoor" />
+                    </div>
                 </div>
-                <div style="flex:2;">
-                    <label>Session Name / Title</label>
-                    <input type="text" id="sj-title" placeholder="e.g. The Siege of Graymoor" />
+
+                <label>Date</label>
+                <input type="date" id="sj-date" value="${todayFormatted}" />
+
+                <label>Session Summary / Recap</label>
+                <textarea id="sj-summary" rows="3" placeholder="A brief summary of what happened (shows on Dashboard)..."></textarea>
+
+                <label>Full Session Notes / Details</label>
+                <textarea id="sj-content" rows="6" placeholder="Detailed notes, key moments, dialogue, decisions made..."></textarea>
+
+                <div style="text-align:right; margin-top:1rem;">
+                    <button id="save-sj-btn" class="btn" style="background:var(--accent-gold); color:#fff;">Save Session</button>
                 </div>
-            </div>
+            `, (modalBody) => {
+                modalBody.querySelector('#save-sj-btn').addEventListener('click', () => {
+                    const num = parseInt(modalBody.querySelector('#sj-number').value) || 0;
+                    const titleInput = modalBody.querySelector('#sj-title').value || 'Untitled Session';
+                    const rawDate = modalBody.querySelector('#sj-date').value;
+                    const summary = modalBody.querySelector('#sj-summary').value || '';
+                    const content = modalBody.querySelector('#sj-content').value || '';
 
-            <label>Date</label>
-            <input type="date" id="sj-date" value="${todayFormatted}" />
+                    const fullTitle = `Session ${num}: ${titleInput}`;
 
-            <label>Session Summary / Recap</label>
-            <textarea id="sj-summary" rows="3" placeholder="A brief summary of what happened (shows on Dashboard)..."></textarea>
+                    if (!data.history) data.history = [];
+                    const newEntry = {
+                        id: 'h' + Date.now(),
+                        title: fullTitle,
+                        date_display: rawDate, // Save the exactly selected YYYY-MM-DD date
+                        date: rawDate,         // Maintain backward compat for JS frontend
+                        summary: summary,
+                        content: content.replace(/\n/g, '<br>'),
+                        sessionNumber: num
+                    };
+                    
+                    data.history.push(newEntry);
+                    DB.save('sessions', newEntry);
 
-            <label>Full Session Notes / Details</label>
-            <textarea id="sj-content" rows="6" placeholder="Detailed notes, key moments, dialogue, decisions made..."></textarea>
-
-            <div style="text-align:right; margin-top:1rem;">
-                <button id="save-sj-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Session</button>
-            </div>
-        `, (modalBody) => {
-            modalBody.querySelector('#save-sj-btn').addEventListener('click', () => {
-                const num = parseInt(modalBody.querySelector('#sj-number').value) || 0;
-                const titleInput = modalBody.querySelector('#sj-title').value || 'Untitled Session';
-                const rawDate = modalBody.querySelector('#sj-date').value;
-                const summary = modalBody.querySelector('#sj-summary').value || '';
-                const content = modalBody.querySelector('#sj-content').value || '';
-
-                // Format date nicely
-                let displayDate = rawDate;
-                if (rawDate) {
-                    const d = new Date(rawDate + 'T00:00:00');
-                    displayDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-                }
-
-                const fullTitle = `Session ${num}: ${titleInput}`;
-
-                if (!data.history) data.history = [];
-                const newEntry = {
-                    id: 'h' + Date.now(),
-                    title: fullTitle,
-                    date_display: displayDate, // Match API column
-                    summary: summary,
-                    content: content.replace(/\n/g, '<br>'),
-                    sessionNumber: num
-                };
-                // Fallback for JS rendering which still uses 'date'
-                newEntry.date = displayDate; 
-                
-                data.history.push(newEntry);
-                DB.save('sessions', newEntry);
-
-                appInstance.closeModal();
-                appInstance.renderView('journal');
+                    appInstance.closeModal();
+                    appInstance.renderView('journal');
+                });
             });
         });
-    });
 
     // --- Edit buttons ---
     container.querySelectorAll('.edit-journal-btn').forEach(btn => {
@@ -156,7 +148,7 @@ window.renderJournal = function(data, appInstance) {
                 <label>Full Notes</label>
                 <textarea id="edit-journal-content" style="padding:1rem; font-family:var(--font-body); font-size:1rem; line-height:1.6; resize:vertical; min-height:200px;">${(entry.content || '').replace(/<br>/g, '\n')}</textarea>
                 <div style="text-align:right; margin-top:1rem;">
-                    <button id="save-journal-btn" class="btn" style="background:var(--accent-gold); color:var(--bg-dark);">Save Changes</button>
+                    <button id="save-journal-btn" class="btn" style="background:var(--accent-gold); color:#fff;">Save Changes</button>
                 </div>
             `, (modalBody) => {
                 modalBody.querySelector('#save-journal-btn').addEventListener('click', () => {

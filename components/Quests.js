@@ -9,10 +9,10 @@ window.renderQuests = function(data, appInstance) {
         <div class="section-header">
             <h2 class="section-title">Quest Log</h2>
             <div style="display:flex; gap:10px;">
-                <button class="btn active" id="filter-all">All</button>
-                <button class="btn" id="filter-active">Active</button>
-                <button class="btn" id="filter-completed">Completed</button>
-                <button class="btn" id="add-quest-btn" style="margin-left:auto; background:var(--accent-gold); color:var(--bg-dark);">+ Add Quest</button>
+                <button class="btn active" id="filter-all" style="color:#fff;">All</button>
+                <button class="btn" id="filter-active" style="color:#fff;">Active</button>
+                <button class="btn" id="filter-completed" style="color:#fff;">Completed</button>
+                <button class="btn" id="add-quest-btn" style="margin-left:auto; background:var(--accent-gold); color:#fff;">+ Add Quest</button>
             </div>
         </div>
         <div id="quests-container-body">
@@ -26,12 +26,12 @@ window.renderQuests = function(data, appInstance) {
         const side = filtered.filter(q => q.isMainQuest === false);
         return `
             ${main.length > 0 ? `
-                <h3 style="color:var(--accent-gold); border-bottom:1px solid var(--accent-gold); padding-bottom:0.5rem; margin:1.5rem 0 1rem;">Main Quests</h3>
-                <div class="grid-cards" style="margin-bottom:2rem;">${main.map(q => renderQuestCard(q)).join('')}</div>` : ''}
+                <h3 class="bg-header" style="border-bottom:1px solid #fff; padding-bottom:0.5rem; margin:1.5rem 0 1rem;">Main Quests</h3>
+                <div class="grid-cards" style="margin-bottom:2rem ;">${main.map(q => renderQuestCard(q)).join('')}</div>` : ''}
             ${side.length > 0 ? `
-                <h3 style="color:var(--text-muted); border-bottom:1px solid var(--text-muted); padding-bottom:0.5rem; margin:1.5rem 0 1rem;">Side Quests</h3>
+                <h3 class="bg-subheader" style="border-bottom:1px solid var(--panel-border); padding-bottom:0.5rem; margin:1.5rem 0 1rem;">Side Quests</h3>
                 <div class="grid-cards">${side.map(q => renderQuestCard(q)).join('')}</div>` : ''}
-            ${filtered.length === 0 ? '<p class="text-muted">No quests match this filter.</p>' : ''}
+            ${filtered.length === 0 ? '<p class="bg-text">No quests match this filter.</p>' : ''}
         `;
     }
 
@@ -40,13 +40,12 @@ window.renderQuests = function(data, appInstance) {
         <div class="card quest-card" data-id="${quest.id}" style="cursor:pointer;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3 style="margin-bottom:0.5rem;">${quest.title}</h3>
-                <span style="font-size:0.8rem; padding:0.2rem 0.6rem; border-radius:10px; background:${quest.status === 'active' ? 'var(--accent-gold)' : 'var(--success)'}; color:${quest.status === 'active' ? '#000' : '#fff'};">${quest.status.toUpperCase()}</span>
+                <span style="font-size:0.8rem; padding:0.2rem 0.6rem; border-radius:10px; background:${quest.status === 'active' ? 'var(--accent-gold)' : 'var(--success)'}; color:#fff;">${quest.status.toUpperCase()}</span>
             </div>
             <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Location: ${quest.location}</p>
             <p style="font-size:0.9rem; margin-bottom:1rem; min-height:40px;">${quest.description}</p>
             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                 <p style="color:var(--accent-magic); font-size:0.8rem; margin:0;">Giver: ${quest.npc}</p>
-                <span class="text-gold" style="font-size:0.8rem;">Lvl ${quest.level || '?'}</span>
             </div>
         </div>`;
     }
@@ -112,21 +111,42 @@ window.renderQuests = function(data, appInstance) {
                 </div>
             </div>
         `, (modalBody) => {
-            // Task checkboxes — FIX: update data then re-open modal without re-rendering whole view
+            // Task checkboxes
             modalBody.querySelectorAll('.task-checkbox').forEach(cb => {
                 cb.addEventListener('change', (ev) => {
                     const idx = parseInt(ev.target.dataset.idx);
-                    quest.tasks[idx].completed = ev.target.checked;
+                    const isChecked = ev.target.checked;
+                    quest.tasks[idx].completed = isChecked;
+
+                    // Update styling directly in DOM without reloading modal
+                    const textSpan = ev.target.nextElementSibling;
+                    if (isChecked) {
+                        textSpan.style.textDecoration = 'line-through';
+                        textSpan.style.color = 'var(--text-muted)';
+                    } else {
+                        textSpan.style.textDecoration = '';
+                        textSpan.style.color = '';
+                    }
 
                     const allDone = quest.tasks.every(t => t.completed);
-                    if (allDone && quest.status === 'active') quest.status = 'completed';
-                    else if (!allDone && quest.status === 'completed') quest.status = 'active';
+                    const statusSpan = modalBody.querySelector('span[style*="var(--accent-gold)"], span[style*="var(--success)"]');
+                    
+                    if (allDone && quest.status === 'active') {
+                        quest.status = 'completed';
+                        if (statusSpan) {
+                            statusSpan.textContent = 'COMPLETED';
+                            statusSpan.style.color = 'var(--success)';
+                        }
+                    } else if (!allDone && quest.status === 'completed') {
+                        quest.status = 'active';
+                        if (statusSpan) {
+                            statusSpan.textContent = 'ACTIVE';
+                            statusSpan.style.color = 'var(--accent-gold)';
+                        }
+                    }
 
                     // Persist to DB
                     DB.save('quests', quest);
-                    // Close current modal and re-open same quest modal (no full page re-render)
-                    appInstance.closeModal();
-                    setTimeout(() => openQuestModal(quest), 50);
                 });
             });
 

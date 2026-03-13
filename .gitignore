@@ -1,0 +1,30 @@
+# Ignore configuration files with sensitive data
+config.php
+*.local.php
+.env
+.env.local
+
+# Ignore database backups
+*.sql
+*.sql.gz
+*.bak
+*.backup
+
+# Ignore IDE and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+temp.txt
+temp*.txt
+
+# Ignore node_modules if you ever add npm
+node_modules/
+package-lock.json
+
+# Ignore environment-specific files
+.env.production
+.env.development
+.env.local

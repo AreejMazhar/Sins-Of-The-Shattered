@@ -81,22 +81,23 @@ CREATE TABLE IF NOT EXISTS `items` (
   `emoji`             VARCHAR(10),
   `image`             TEXT,
   `inPocketDimension` TINYINT(1)   DEFAULT 0,
+  `count`             INT          DEFAULT 1,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `items` VALUES
-('i1','Sword of Light','rare','weapon','Weapons','Glows dimly in the presence of undead.','Forged in the sun-drenched forges of Elsweyr.','🗡️',NULL,0),
-('i2','Potion of Healing','common','consumable','Consumables','Restores 2d4+2 HP.','Brewed by the local alchemist.','🧪',NULL,0),
-('i3','Dragon Scale Shield','epic','armor','Armour','Grants resistance to fire damage.','Crafted from the scales of the fallen red dragon, Ignis.','🛡️',NULL,0),
-('i4','Regal Greataxe','uncommon','weapon','Weapons','A heavy greataxe with a diamond-encrusted handle.','Looted from a fey creature during the Wyrm\'s Rock invasion.','🪓',NULL,0),
-('i5','Magic Orb','rare','arcane focus','Artifacts','A humming orb of unknown origin from the fey incursion.','Recovered from a fey construct after the prison battle.','🔮',NULL,0),
-('i6','Mana-Contact Card','uncommon','consumable','Consumables','A card infused with magical energy that allows contact with its creator.','Given by Violet the tracer after rescuing the children.','📇',NULL,0),
-('i7','Sleight of Hand Bracelet','uncommon','jewelry','Jewelry','+3 to Sleight of Hand checks.','Found in Veldren\'s room in Nyloth\'s tower.','💍',NULL,0),
-('i8','Vale\'s Grimoire','legendary','arcane tome','Artifacts','Shifting diagrams on the cover. Seems to teach magic of its own accord. Possibly linked to the antler cult.','Found abandoned in Baldur\'s Gate Lower City. Origin unknown.','📖',NULL,0),
-('i9','Worm\'s Eye Amulet','rare','jewelry','Jewelry','An amulet recovered from the hag coven\'s defeat. Its properties are yet unknown.','Taken from the three hags in Session 10.','🪬',NULL,0),
-('i10','Memory Lantern','rare','arcane item','Artifacts','A lantern that can display or absorb memories. Given by the hags as a reward for defeating them.','Reward from defeating the hag coven.','🏮',NULL,0),
-('i11','Grimoire Page','uncommon','arcane item','Scrolls','A single page from a mysterious tome, featuring unfamiliar script.','Recovered from the hags — matches Vale\'s grimoire style.','📜',NULL,0),
-('i12','Golden Crescent Key','uncommon','key','Misc','A golden crescent-shaped key. Opens the hidden hatch in the Crawling Spider.','Found in the ruins of the Crawling Spider (Impenders) in Session 13.','🗝️',NULL,0);
+('i1','Sword of Light','rare','weapon','Weapons','Glows dimly in the presence of undead.','Forged in the sun-drenched forges of Elsweyr.','🗡️',NULL,0,1),
+('i2','Potion of Healing','common','consumable','Consumables','Restores 2d4+2 HP.','Brewed by the local alchemist.','🧪',NULL,0,1),
+('i3','Dragon Scale Shield','epic','armor','Armour','Grants resistance to fire damage.','Crafted from the scales of the fallen red dragon, Ignis.','🛡️',NULL,0,1),
+('i4','Regal Greataxe','uncommon','weapon','Weapons','A heavy greataxe with a diamond-encrusted handle.','Looted from a fey creature during the Wyrm\'s Rock invasion.','🪓',NULL,0,1),
+('i5','Magic Orb','rare','arcane focus','Artifacts','A humming orb of unknown origin from the fey incursion.','Recovered from a fey construct after the prison battle.','🔮',NULL,0,1),
+('i6','Mana-Contact Card','uncommon','consumable','Consumables','A card infused with magical energy that allows contact with its creator.','Given by Violet the tracer after rescuing the children.','📇',NULL,0,1),
+('i7','Sleight of Hand Bracelet','uncommon','jewelry','Jewelry','+3 to Sleight of Hand checks.','Found in Veldren\'s room in Nyloth\'s tower.','💍',NULL,0,1),
+('i8','Vale\'s Grimoire','legendary','arcane tome','Artifacts','Shifting diagrams on the cover. Seems to teach magic of its own accord. Possibly linked to the antler cult.','Found abandoned in Baldur\'s Gate Lower City. Origin unknown.','📖',NULL,0,1),
+('i9','Worm\'s Eye Amulet','rare','jewelry','Jewelry','An amulet recovered from the hag coven\'s defeat. Its properties are yet unknown.','Taken from the three hags in Session 10.','🪬',NULL,0,1),
+('i10','Memory Lantern','rare','arcane item','Artifacts','A lantern that can display or absorb memories. Given by the hags as a reward for defeating them.','Reward from defeating the hag coven.','🏮',NULL,0,1),
+('i11','Grimoire Page','uncommon','arcane item','Scrolls','A single page from a mysterious tome, featuring unfamiliar script.','Recovered from the hags — matches Vale\'s grimoire style.','📜',NULL,0,1),
+('i12','Golden Crescent Key','uncommon','key','Misc','A golden crescent-shaped key. Opens the hidden hatch in the Crawling Spider.','Found in the ruins of the Crawling Spider (Impenders) in Session 13.','🗝️',NULL,0,1);
 
 -- -------------------------------------------------------------
 -- NPCS

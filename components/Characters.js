@@ -142,6 +142,7 @@ window.renderCharacters = function(data, appInstance) {
                         if (newUrl && newUrl.trim() !== "") {
                             char.image = newUrl.trim();
                             modalBody.querySelector('#char-modal-img').src = char.image;
+                            DB.save('characters', char);
                             appInstance.renderView('characters');
                         }
                     });

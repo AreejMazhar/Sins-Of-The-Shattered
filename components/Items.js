@@ -8,8 +8,11 @@ window.renderItems = function(data, appInstance) {
         <div class="section-header">
             <h2 class="section-title">Items &amp; Loot</h2>
             <div style="display:flex; align-items:center; gap:0.6rem; flex-shrink:0;">
-                <input type="text" id="item-search" placeholder="Search items..." style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0; width:160px;" />
-                <select id="item-rarity-filter" style="padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0;">
+                <input type="text" id="item-search" placeholder="Search items..." style="padding:0.5rem; border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0; width:150px; background:var(--panel-bg);" />
+                <label style="display:flex; align-items:center; gap:0.3rem; margin:0; cursor:pointer; white-space:nowrap;" title="Show only In Pocket Dimension">
+                    <input type="checkbox" id="item-pocket-filter" style="margin:0; width:auto;" /> 🌀
+                </label>
+                <select id="item-rarity-filter" style="padding:0.5rem; border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0; background:var(--panel-bg);">
                     <option value="">All Rarities</option>
                     <option value="common">Common</option>
                     <option value="uncommon">Uncommon</option>
@@ -17,7 +20,7 @@ window.renderItems = function(data, appInstance) {
                     <option value="epic">Epic</option>
                     <option value="legendary">Legendary</option>
                 </select>
-                <button id="add-item-btn" class="btn" style="white-space:nowrap; margin:0;">+ Add Item</button>
+                <button id="add-item-btn" class="btn" style="white-space:nowrap; margin:0; color:#fff; border-color:#fff;">+ Add Item</button>
             </div>
         </div>
 
@@ -62,12 +65,16 @@ window.renderItems = function(data, appInstance) {
         const portalBadge = item.inPocketDimension
             ? `<div style="position:absolute; top:4px; left:4px; font-size:1rem; line-height:1; filter:drop-shadow(0 0 4px var(--accent-magic));" title="In Pocket Dimension">🌀</div>`
             : '';
+        const countBadge = (item.count && item.count > 1)
+            ? `<div style="position:absolute; bottom:4px; right:4px; background:var(--panel-bg); color:var(--text-main); font-size:0.7rem; font-weight:bold; padding:2px 4px; border-radius:4px; border:1px solid var(--panel-border);">x${item.count}</div>`
+            : '';
         return `
             <div class="item-slot ${item.rarity}" data-id="${item.id}"
                  data-name="${(item.name || '').toLowerCase()}"
                  data-rarity="${item.rarity || ''}"
                  style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:0.75rem 0.5rem; gap:0.4rem; position:relative;">
                 ${portalBadge}
+                ${countBadge}
                 ${imgSrc
                     ? `<img src="${imgSrc}" alt="${item.name}" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--panel-border);">`
                     : `<div style="font-size:2.5rem;">${fallback}</div>`
@@ -86,7 +93,7 @@ window.renderItems = function(data, appInstance) {
             const section = document.createElement('div');
             section.style.marginBottom = '2.5rem';
             section.innerHTML = `
-                <h3 style="color:var(--accent-gold); border-bottom:2px solid var(--accent-gold); padding-bottom:0.4rem; margin-bottom:1rem;">${cat}</h3>
+                <h3 class="bg-header" style="border-bottom:2px solid #fff; padding-bottom:0.4rem; margin-bottom:1rem;">${cat}</h3>
                 <div class="item-grid" style="grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:1.5rem;">
                     ${items.map(item => renderItemSlot(item)).join('')}
                 </div>
@@ -99,16 +106,19 @@ window.renderItems = function(data, appInstance) {
     function applyFilters() {
         const searchVal = container.querySelector('#item-search').value.toLowerCase();
         const rarityVal = container.querySelector('#item-rarity-filter').value.toLowerCase();
+        const pocketOnly = container.querySelector('#item-pocket-filter').checked;
         const filtered = data.items.filter(item => {
             const matchSearch = !searchVal || (item.name || '').toLowerCase().includes(searchVal);
             const matchRarity = !rarityVal || (item.rarity || '') === rarityVal;
-            return matchSearch && matchRarity;
+            const matchPocket = !pocketOnly || item.inPocketDimension;
+            return matchSearch && matchRarity && matchPocket;
         });
         renderCategories(filtered);
     }
 
     container.querySelector('#item-search').addEventListener('input', applyFilters);
     container.querySelector('#item-rarity-filter').addEventListener('change', applyFilters);
+    container.querySelector('#item-pocket-filter').addEventListener('change', applyFilters);
 
     function bindSlots() {
         container.querySelectorAll('.item-slot').forEach(slot => {
@@ -193,10 +203,16 @@ window.renderItems = function(data, appInstance) {
                         <option value="Consumables" ${getItemCategory(item) === 'Consumables' ? 'selected' : ''}>Consumables</option>
                         <option value="Misc" ${getItemCategory(item) === 'Misc' ? 'selected' : ''}>Misc</option>
                     </select>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin-top:0.5rem;">
-                        <input type="checkbox" id="ei-pocket" ${item.inPocketDimension ? 'checked' : ''} style="width:auto; margin:0;" />
-                        <span>🌀 In Pocket Dimension</span>
-                    </label>
+                    <div style="display:flex; gap:1rem; align-items:center; margin-top:0.5rem;">
+                        <div style="flex:1;">
+                            <label>Count</label>
+                            <input type="number" id="ei-count" value="${item.count || 1}" min="1" style="margin-bottom:0;" />
+                        </div>
+                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; flex:2;">
+                            <input type="checkbox" id="ei-pocket" ${item.inPocketDimension ? 'checked' : ''} style="width:auto; margin:0;" />
+                            <span>🌀 In Pocket Dimension</span>
+                        </label>
+                    </div>
                 </div>
                 <div style="flex:1; min-width:200px;">
                     <label>Item Image URL</label>
@@ -231,6 +247,7 @@ window.renderItems = function(data, appInstance) {
                 item.history = editBody.querySelector('#ei-history').value;
                 item.image = editBody.querySelector('#ei-image').value.trim() || null;
                 item.emoji = selectedEmoji;
+                item.count = parseInt(editBody.querySelector('#ei-count').value, 10) || 1;
                 item.inPocketDimension = editBody.querySelector('#ei-pocket').checked;
                 
                 DB.save('items', item);
@@ -272,10 +289,16 @@ window.renderItems = function(data, appInstance) {
                         <option value="Consumables">Consumables</option>
                         <option value="Misc">Misc</option>
                     </select>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin-top:0.5rem;">
-                        <input type="checkbox" id="new-item-pocket" style="width:auto; margin:0;" />
-                        <span>🌀 In Pocket Dimension</span>
-                    </label>
+                    <div style="display:flex; gap:1rem; align-items:center; margin-top:0.5rem;">
+                        <div style="flex:1;">
+                            <label>Count</label>
+                            <input type="number" id="new-item-count" value="1" min="1" style="margin-bottom:0;" />
+                        </div>
+                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; flex:2;">
+                            <input type="checkbox" id="new-item-pocket" style="width:auto; margin:0;" />
+                            <span>🌀 In Pocket Dimension</span>
+                        </label>
+                    </div>
                 </div>
                 <div style="flex:1; min-width:200px;">
                     <label>Item Image URL</label>
@@ -314,6 +337,7 @@ window.renderItems = function(data, appInstance) {
                     history: modalBody.querySelector('#new-item-history').value,
                     image: imageUrl || null,
                     emoji: selectedEmoji,
+                    count: parseInt(modalBody.querySelector('#new-item-count').value, 10) || 1,
                     inPocketDimension: modalBody.querySelector('#new-item-pocket').checked
                 };
                 

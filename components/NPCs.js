@@ -6,26 +6,26 @@ window.renderNPCs = function(data, appInstance) {
         <div class="section-header">
             <h2 class="section-title">NPC Database</h2>
             <div style="display:flex; justify-content:space-between; align-items:center; width:65%; gap:1rem;">
-                <input type="text" id="npc-search" placeholder="Search NPCs..." style="flex:1; padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:var(--text-main); border-radius:var(--radius-sm); margin:0;" />
-                <button id="add-npc-btn" class="btn" style="white-space:nowrap;">+ Add NPC</button>
+                <input type="text" id="npc-search" placeholder="Search NPCs..." style="flex:1; padding:0.5rem; background:var(--bg-dark); border:1px solid var(--panel-border); color:#fff; border-radius:var(--radius-sm); margin:0;" />
+                <button id="add-npc-btn" class="btn" style="white-space:nowrap; color:#fff; border-color:#fff;">+ Add NPC</button>
             </div>
         </div>
         
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:2rem; margin-top:2rem;">
             <div>
-                <h3 style="color:var(--success); border-bottom:2px solid var(--success); padding-bottom:0.5rem; margin-bottom:1rem;">Friendly</h3>
+                <h3 style="color:#12b886; border-bottom:2px solid #12b886; padding-bottom:0.5rem; margin-bottom:1rem;">Friendly</h3>
                 <div class="npc-group" id="npc-friendly">
                     ${renderNPCList(data.npcs.filter(n => n.attitude === 'Friendly'))}
                 </div>
             </div>
             <div>
-                <h3 style="color:var(--accent-gold); border-bottom:2px solid var(--accent-gold); padding-bottom:0.5rem; margin-bottom:1rem;">Neutral</h3>
+                <h3 style="color:#9b59b6; border-bottom:2px solid #9b59b6; padding-bottom:0.5rem; margin-bottom:1rem;">Neutral</h3>
                 <div class="npc-group" id="npc-neutral">
                     ${renderNPCList(data.npcs.filter(n => n.attitude === 'Neutral'))}
                 </div>
             </div>
             <div>
-                <h3 style="color:var(--danger); border-bottom:2px solid var(--danger); padding-bottom:0.5rem; margin-bottom:1rem;">Hostile</h3>
+                <h3 style="color:#e0407b; border-bottom:2px solid #e0407b; padding-bottom:0.5rem; margin-bottom:1rem;">Hostile</h3>
                 <div class="npc-group" id="npc-hostile">
                     ${renderNPCList(data.npcs.filter(n => n.attitude === 'Hostile'))}
                 </div>
@@ -181,6 +181,8 @@ window.renderNPCs = function(data, appInstance) {
                     <input type="text" id="new-npc-location" placeholder="E.g. The Drowned Rat Tavern" />
                     <label>Defining Trait</label>
                     <input type="text" id="new-npc-trait" placeholder="E.g. Paranoia, Missing an eye" />
+                    <label>Profile Image URL</label>
+                    <input type="text" id="new-npc-image" placeholder="Leave blank for auto-generated image" />
                 </div>
             </div>
             <label>Notes</label>
@@ -191,6 +193,7 @@ window.renderNPCs = function(data, appInstance) {
         `, (modalBody) => {
             modalBody.querySelector('#save-npc-btn').addEventListener('click', () => {
                 const name = modalBody.querySelector('#new-npc-name').value || 'Unknown NPC';
+                const imageUrl = modalBody.querySelector('#new-npc-image').value.trim();
                 const newNPC = {
                     id: 'n' + Date.now(),
                     name,
@@ -199,7 +202,7 @@ window.renderNPCs = function(data, appInstance) {
                     location: modalBody.querySelector('#new-npc-location').value,
                     trait: modalBody.querySelector('#new-npc-trait').value,
                     secret: modalBody.querySelector('#new-npc-secret').value,
-                    image: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + encodeURIComponent(name)
+                    image: imageUrl ? imageUrl : ('https://api.dicebear.com/7.x/adventurer/svg?seed=' + encodeURIComponent(name))
                 };
                 data.npcs.push(newNPC);
                 DB.save('npcs', newNPC);
