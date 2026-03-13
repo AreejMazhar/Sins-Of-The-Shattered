@@ -145,6 +145,8 @@ window.renderJournal = function(data, appInstance) {
                 <h2 class="text-gold" style="margin-bottom:1.5rem;">Edit: ${entry.title}</h2>
                 <label>Session Summary / Recap</label>
                 <textarea id="edit-journal-summary" rows="3">${entry.summary || ''}</textarea>
+                <label>Date</label>
+                <input type="date" id="edit-journal-date" value="${entry.date_display || entry.date || ''}" />
                 <label>Full Notes</label>
                 <textarea id="edit-journal-content" style="padding:1rem; font-family:var(--font-body); font-size:1rem; line-height:1.6; resize:vertical; min-height:200px;">${(entry.content || '').replace(/<br>/g, '\n')}</textarea>
                 <div style="text-align:right; margin-top:1rem;">
@@ -154,8 +156,8 @@ window.renderJournal = function(data, appInstance) {
                 modalBody.querySelector('#save-journal-btn').addEventListener('click', () => {
                     entry.summary = modalBody.querySelector('#edit-journal-summary').value;
                     entry.content = modalBody.querySelector('#edit-journal-content').value.replace(/\n/g, '<br>');
-                    // Ensure date_display exists for the API
-                    if (!entry.date_display) entry.date_display = entry.date;
+                    entry.date_display = modalBody.querySelector('#edit-journal-date').value;
+                    entry.date = entry.date_display; // Keep backward compat
                     
                     DB.save('sessions', entry);
                     appInstance.closeModal();

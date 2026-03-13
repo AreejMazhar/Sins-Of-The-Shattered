@@ -30,17 +30,18 @@ class App {
         });
 
         // ── Theme ────────────────────────────────────────────
-        this.isDarkMode = false;
+        this.isDarkMode = true;
         this.themeToggleBtn.addEventListener('click', () => {
             this.isDarkMode = !this.isDarkMode;
             if (this.isDarkMode) {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 this.themeToggleBtn.innerHTML = '☀️ Light Mode';
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-                this.themeToggleBtn.innerHTML = '🌙 Dark Mode';
             }
         });
+        // Set initial state correctly if it's dark
+        if (this.isDarkMode) {
+            this.themeToggleBtn.innerHTML = '☀️ Light Mode';
+        }
 
         // ── Show loading state ───────────────────────────────
         this.mainContent.innerHTML = `
