@@ -15,7 +15,7 @@ window.renderMonsters = function(data, appInstance) {
     function openMonsterForm(existing = null) {
         const isEdit = !!existing;
         appInstance.openModal(`
-            <h2 class="text-gold" style="margin-bottom:1.5rem;">${isEdit ? '✏️ Edit Monster' : '👹 Add Monster'}</h2>
+            <h2 class="text-gold" style="margin-bottom:1.5rem;">${isEdit ? '✏️ Edit Monster' : '+ Add Monster'}</h2>
             <label>Name *</label>
             <input type="text" id="mn-name" value="${isEdit ? existing.name.replace(/"/g, '&quot;') : ''}" placeholder="Monster name" />
             <label>Image URL</label>
@@ -60,23 +60,17 @@ window.renderMonsters = function(data, appInstance) {
     // ── View Monster Detail modal ─────────────────────────────────
     function openMonsterDetail(monster) {
         appInstance.openModal(`
-            <div style="display:flex; gap:2rem; flex-wrap:wrap; align-items:flex-start;">
-                ${monster.imageUrl ? `
-                <div style="flex:0 0 auto; text-align:center;">
-                    <img src="${monster.imageUrl}" alt="${monster.name}"
-                         style="width:200px; height:200px; object-fit:cover; border-radius:var(--radius-md); border:2px solid var(--accent-gold);"
-                         onerror="this.parentElement.style.display='none';" />
-                </div>` : ''}
-                <div style="flex:1; min-width:200px;">
-                    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem; flex-wrap:wrap;">
-                        <h2 style="margin:0;">${monster.name}</h2>
-                        ${monster.isBoss ? `<span class="monster-boss-badge">👑 Boss</span>` : `<span class="monster-minion-badge">⚔️ Minion</span>`}
-                    </div>
-                    <p style="color:var(--text-muted); line-height:1.8; white-space:pre-wrap; font-size:0.95rem; margin-top:1rem;">
-                        ${monster.description || 'No description recorded.'}
-                    </p>
-                </div>
+            ${monster.imageUrl ? `
+            <div style="text-align:center; margin-bottom:1.5rem;">
+                <img src="${monster.imageUrl}" alt="${monster.name}"
+                     style="max-width:100%; max-height:300px; width:auto; object-fit:contain; border-radius:var(--radius-md); border:2px solid var(--accent-gold);"
+                     onerror="this.parentElement.style.display='none';" />
+            </div>` : ''}
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+                <h2 style="margin:0;">${monster.name}</h2>
+                ${monster.isBoss ? `<span class="monster-boss-badge">👑 Boss</span>` : `<span class="monster-minion-badge">⚔️ Minion</span>`}
             </div>
+            <p style="color:var(--text-muted); line-height:1.8; white-space:pre-wrap; font-size:0.95rem; text-align:left;">${(monster.description || 'No description recorded.').trim()}</p>
         `);
     }
 

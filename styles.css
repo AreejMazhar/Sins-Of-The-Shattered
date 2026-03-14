@@ -118,7 +118,6 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     height: 100vh;
     width: 100vw;
-    backdrop-filter: blur(2px);
 }
 
 .sidebar {
@@ -735,16 +734,18 @@ label {
 /* ============================================================
    Gallery Styles
    ============================================================ */
+
+/* Art grid: larger cards so images actually show properly */
 .gallery-art-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 380px));
     gap: 1.5rem;
 }
 
 .gallery-art-card {
     display: flex;
     flex-direction: column;
-    cursor: default;
+    cursor: pointer;   /* clickable — opens full-view modal */
 }
 
 .gallery-art-img-wrap {
@@ -755,6 +756,7 @@ label {
     background: var(--panel-border);
     margin-bottom: 0.75rem;
     flex-shrink: 0;
+    position: relative;
 }
 
 .gallery-art-img-wrap img {
@@ -762,22 +764,45 @@ label {
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.3s ease;
+    transition: transform 0.35s ease;
 }
 
 .gallery-art-card:hover .gallery-art-img-wrap img {
-    transform: scale(1.04);
+    transform: scale(1.06);
+}
+
+/* Hover hint shown over image */
+.gallery-art-zoom-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    border-radius: var(--radius-sm);
+}
+
+.gallery-art-card:hover .gallery-art-zoom-hint {
+    opacity: 1;
 }
 
 .gallery-art-body {
     flex: 1;
 }
 
-/* Writing cards — small, title-only */
+/* Writing cards — fixed-width small cards, flex-wrap row */
 .gallery-writing-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
+    align-items: flex-start;
 }
 
 .gallery-writing-card {
@@ -785,7 +810,9 @@ label {
     flex-direction: column;
     align-items: stretch;
     cursor: pointer;
-    min-height: 160px;
+    width: 190px;          /* fixed width — won't stretch to fill row */
+    min-height: 170px;
+    flex-shrink: 0;
 }
 
 .gallery-writing-inner {
@@ -855,33 +882,33 @@ label {
 }
 
 /* ============================================================
-   Hamburger Button (mobile only)
+   Hamburger Button  — ONLY shown on mobile, never on desktop
    ============================================================ */
 .hamburger-btn {
-    display: none;
+    display: none !important;   /* hidden on desktop; media query overrides */
     position: fixed;
-    top: 12px;
-    left: 12px;
+    top: 14px;
+    left: 14px;
     z-index: 200;
     background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
+    border: 2px solid var(--accent-gold);
     border-radius: var(--radius-sm);
-    padding: 8px 10px;
     cursor: pointer;
     flex-direction: column;
     gap: 5px;
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
     transition: background 0.2s;
+    padding: 0;
 }
 
 .hamburger-btn span {
     display: block;
-    width: 22px;
-    height: 2px;
+    width: 24px;
+    height: 2.5px;
     background: var(--accent-gold);
     border-radius: 2px;
     transition: all 0.3s ease;
@@ -913,10 +940,29 @@ label {
 /* ============================================================
    Responsive Breakpoints
    ============================================================ */
+
+/* Mid-screen: character modal columns wrap before they overflow */
+@media (max-width: 900px) {
+    .modal-content {
+        max-width: 96vw;
+    }
+
+    /* Force the character modal flex children to wrap */
+    .modal-content > div > div[style*="display:flex"][style*="flex-wrap:wrap"],
+    .modal-content [style*="flex-wrap:wrap"] {
+        flex-wrap: wrap !important;
+    }
+
+    /* Soften the right-column min-width so it'll drop below the left column */
+    .modal-content [style*="min-width:300px"] {
+        min-width: 220px !important;
+    }
+}
+
 @media (max-width: 768px) {
-    /* Show hamburger */
+    /* Show hamburger as flex on mobile */
     .hamburger-btn {
-        display: flex;
+        display: flex !important;
     }
 
     /* Show overlay when active */
@@ -928,11 +974,11 @@ label {
         pointer-events: all;
     }
 
-    /* Sidebar: off-screen by default, slide in when .open */
+    /* Sidebar: off-screen by default, slides in via .open */
     .sidebar {
         position: fixed;
         top: 0;
-        left: -260px;
+        left: -270px;
         height: 100vh;
         z-index: 100;
         transition: left 0.3s ease;
@@ -942,7 +988,7 @@ label {
         left: 0;
     }
 
-    /* Main content: full width, allow scroll, add top padding for hamburger */
+    /* Main content: full width, allow scroll, top pad for hamburger */
     .main-content {
         padding: 4rem 1rem 1.5rem;
         width: 100%;
@@ -952,7 +998,7 @@ label {
         overflow: auto;
     }
 
-    /* Grids: single column */
+    /* Grids */
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
@@ -961,14 +1007,16 @@ label {
         grid-template-columns: 1fr;
     }
 
+    /* Gallery art: two columns on tablet */
     .gallery-art-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(240px, 380px));
         gap: 1rem;
     }
 
-    .gallery-writing-grid {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 0.75rem;
+    /* Gallery writing: scale down card width */
+    .gallery-writing-card {
+        width: 150px;
+        min-height: 150px;
     }
 
     /* Modal: fit screen */
@@ -978,7 +1026,7 @@ label {
         padding: 3rem 1rem 1.5rem;
     }
 
-    /* Section header: stack vertically on very small screens */
+    /* Section header: stack on mobile */
     .section-header {
         flex-direction: column;
         align-items: flex-start;
@@ -989,9 +1037,13 @@ label {
         font-size: 1.6rem;
     }
 
-    /* Character modal: stack columns */
-    .modal-content [style*="flex:1; min-width:180px"] {
-        flex: unset !important;
+    /* Character modal: stack left col and right col */
+    .modal-content [style*="min-width:180px"] {
+        min-width: unset !important;
+        width: 100% !important;
+    }
+    .modal-content [style*="min-width:300px"] {
+        min-width: unset !important;
         width: 100% !important;
     }
 
@@ -1003,11 +1055,12 @@ label {
 
 @media (max-width: 480px) {
     .gallery-art-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 380px));
     }
 
-    .gallery-writing-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .gallery-writing-card {
+        width: 130px;
+        min-height: 140px;
     }
 
     .modal-content {
@@ -1017,4 +1070,5 @@ label {
     .section-title {
         font-size: 1.4rem;
     }
-}
+}
+

@@ -64,7 +64,7 @@ window.renderGallery = function(data, appInstance) {
             <input type="text" id="gw-title" value="${isEdit ? existing.title.replace(/"/g, '&quot;') : ''}" placeholder="Story title" />
             <label>Author Name *</label>
             <input type="text" id="gw-author" value="${isEdit ? (existing.authorName || '').replace(/"/g, '&quot;') : ''}" placeholder="Who wrote this?" />
-            <label>Story Text *</label>
+            <label>Story Text * <span style="font-size:0.75rem; color:var(--text-muted); text-transform:none;">(Markdown supported: **bold**, *italic*, headers, etc.)</span></label>
             <textarea id="gw-text" rows="10" placeholder="Write the story here...">${isEdit ? (existing.storyText || '') : ''}</textarea>
             <div style="text-align:right; margin-top:0.5rem;">
                 <button id="gw-save" class="btn btn-primary">💾 Save</button>
@@ -96,14 +96,30 @@ window.renderGallery = function(data, appInstance) {
         });
     }
 
-    // ── Open "Read Story" modal ───────────────────────────────────
+    // ── Open "View Full Artwork" modal ──────────────────────────────────
+    function openArtViewModal(art) {
+        appInstance.openModal(`
+            <div style="text-align:center; margin-bottom:1rem;">
+                <img src="${art.imageUrl}" alt="${art.title}"
+                     style="max-width:100%; max-height:65vh; object-fit:contain; border-radius:var(--radius-md); border:2px solid var(--accent-gold);"
+                     onerror="this.parentElement.innerHTML='<p class=text-muted>Image could not be loaded.</p>';" />
+            </div>
+            <h3 style="text-align:center; margin-bottom:0.3rem;">${art.title}</h3>
+            <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-bottom:${art.description ? '0.75rem' : '0'};">by ${art.artistName}</p>
+            ${art.description ? `<p style="text-align:center; font-size:0.9rem; color:var(--text-main); line-height:1.6;">${art.description}</p>` : ''}
+        `);
+    }
+
+    // ── Open "Read Story" modal ───────────────────────────────────────
     function openReadingModal(writing) {
         appInstance.openModal(`
             <h2 class="text-gold" style="margin-bottom:0.5rem;">${writing.title}</h2>
             <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem; font-style:italic;">
                 By ${writing.authorName}
             </p>
-            <div style="line-height:2; white-space:pre-wrap; font-size:0.97rem; color:var(--text-main);">${writing.storyText || ''}</div>
+            <div class="gallery-story-content" style="line-height:1.8; font-size:0.97rem; color:var(--text-main);">
+                ${typeof marked !== 'undefined' ? marked.parse(writing.storyText || '') : (writing.storyText || '').replace(/\n/g, '<br>')}
+            </div>
         `);
     }
 
@@ -127,9 +143,10 @@ window.renderGallery = function(data, appInstance) {
                 ? `<p class="text-muted" style="text-align:center; padding:2rem 0;">No artwork yet. Click <em>Add Artwork</em> to begin.</p>`
                 : `<div class="gallery-art-grid">
                     ${artworks.map(art => `
-                        <div class="card gallery-art-card" data-id="${art.id}">
+                        <div class="card gallery-art-card" data-id="${art.id}" title="Click to view">
                             <div class="gallery-art-img-wrap">
                                 <img src="${art.imageUrl || ''}" alt="${art.title}" onerror="this.src=''; this.parentElement.style.background='var(--panel-border)';" />
+                                <div class="gallery-art-zoom-hint">🔍 View</div>
                             </div>
                             <div class="gallery-art-body">
                                 <h4 style="margin-bottom:0.25rem; font-size:1rem;">${art.title}</h4>
@@ -137,8 +154,8 @@ window.renderGallery = function(data, appInstance) {
                                 ${art.description ? `<p style="font-size:0.85rem; color:var(--text-main); line-height:1.5;">${art.description}</p>` : ''}
                             </div>
                             <div class="card-actions">
-                                <button class="btn edit-art-btn" data-id="${art.id}" title="Edit" style="padding:0.3rem 0.6rem; font-size:0.8rem; min-width:auto;">✏️</button>
-                                <button class="btn delete-art-btn" data-id="${art.id}" title="Delete" style="padding:0.3rem 0.6rem; font-size:0.8rem; min-width:auto; background:var(--danger); border-color:var(--danger); color:#fff;">🗑️</button>
+                                <button class="btn edit-art-btn" data-id="${art.id}" title="Edit" style="padding:0.3rem 0.6rem; font-size:0.8rem; min-width:auto;">✏️ Edit</button>
+                                <button class="btn delete-art-btn" data-id="${art.id}" title="Delete" style="padding:0.3rem 0.6rem; font-size:0.8rem; min-width:auto; background:var(--danger); border-color:var(--danger); color:#fff;">🗑️ Delete</button>
                             </div>
                         </div>
                     `).join('')}
@@ -156,8 +173,8 @@ window.renderGallery = function(data, appInstance) {
                         <div class="card gallery-writing-card" data-id="${w.id}" title="Click to read">
                             <div class="gallery-writing-inner">
                                 <div class="gallery-writing-icon">📜</div>
-                                <h4 style="font-size:0.9rem; text-align:center; line-height:1.4;">${w.title}</h4>
-                                <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.25rem;">by ${w.authorName}</p>
+                                <h4 style="font-size:1.05rem; text-align:center; line-height:1.4;">${w.title}</h4>
+                                <p style="font-size:0.78rem; color:var(--text-muted); text-align:center; margin-top:0.3rem;">by ${w.authorName}</p>
                             </div>
                             <div class="card-actions">
                                 <button class="btn edit-writing-btn" data-id="${w.id}" title="Edit" style="padding:0.3rem 0.6rem; font-size:0.8rem; min-width:auto;">✏️</button>
@@ -173,6 +190,16 @@ window.renderGallery = function(data, appInstance) {
     // ── Button listeners ──────────────────────────────────────────
     container.querySelector('#add-art-btn').addEventListener('click', () => openArtForm());
     container.querySelector('#add-story-btn').addEventListener('click', () => openWritingForm());
+
+    // Art: click card to view full image
+    container.querySelectorAll('.gallery-art-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-art-btn') || e.target.closest('.delete-art-btn')) return;
+            const id = card.dataset.id;
+            const art = (window.campaignData.gallery_art || []).find(a => a.id === id);
+            if (art) openArtViewModal(art);
+        });
+    });
 
     // Art: edit / delete
     container.querySelectorAll('.edit-art-btn').forEach(btn => {
