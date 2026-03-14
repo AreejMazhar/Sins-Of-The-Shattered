@@ -720,27 +720,301 @@ label {
     100% { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
+/* ============================================================
+   Card Actions (edit/delete button row on new page cards)
+   ============================================================ */
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--panel-border);
+}
+
+/* ============================================================
+   Gallery Styles
+   ============================================================ */
+.gallery-art-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+.gallery-art-card {
+    display: flex;
+    flex-direction: column;
+    cursor: default;
+}
+
+.gallery-art-img-wrap {
+    width: 100%;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: var(--panel-border);
+    margin-bottom: 0.75rem;
+    flex-shrink: 0;
+}
+
+.gallery-art-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.gallery-art-card:hover .gallery-art-img-wrap img {
+    transform: scale(1.04);
+}
+
+.gallery-art-body {
+    flex: 1;
+}
+
+/* Writing cards — small, title-only */
+.gallery-writing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.gallery-writing-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    cursor: pointer;
+    min-height: 160px;
+}
+
+.gallery-writing-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.gallery-writing-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ============================================================
+   Monster Styles
+   ============================================================ */
+.monster-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.monster-boss-ribbon {
+    position: absolute;
+    top: 12px;
+    right: -28px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.7rem;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 0.2rem 2.2rem;
+    transform: rotate(35deg);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    z-index: 1;
+    white-space: nowrap;
+}
+
+.monster-boss-badge {
+    display: inline-block;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.7rem;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+}
+
+.monster-minion-badge {
+    display: inline-block;
+    background: var(--panel-border);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+}
+
+/* ============================================================
+   Hamburger Button (mobile only)
+   ============================================================ */
+.hamburger-btn {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 200;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    cursor: pointer;
+    flex-direction: column;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: background 0.2s;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--accent-gold);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+/* Animate to X when open */
+.hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ============================================================
+   Sidebar Overlay (mobile backdrop)
+   ============================================================ */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 15;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+}
+
+/* ============================================================
+   Responsive Breakpoints
+   ============================================================ */
 @media (max-width: 768px) {
+    /* Show hamburger */
+    .hamburger-btn {
+        display: flex;
+    }
+
+    /* Show overlay when active */
+    .sidebar-overlay {
+        display: block;
+        pointer-events: none;
+    }
+    .sidebar-overlay.active {
+        pointer-events: all;
+    }
+
+    /* Sidebar: off-screen by default, slide in when .open */
     .sidebar {
         position: fixed;
-        left: -250px;
+        top: 0;
+        left: -260px;
+        height: 100vh;
+        z-index: 100;
         transition: left 0.3s ease;
     }
-    
+
     .sidebar.open {
         left: 0;
     }
-    
+
+    /* Main content: full width, allow scroll, add top padding for hamburger */
     .main-content {
-        padding: 1rem;
+        padding: 4rem 1rem 1.5rem;
+        width: 100%;
     }
-    
+
+    body {
+        overflow: auto;
+    }
+
+    /* Grids: single column */
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .grid-cards {
         grid-template-columns: 1fr;
     }
+
+    .gallery-art-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+    }
+
+    .gallery-writing-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.75rem;
+    }
+
+    /* Modal: fit screen */
+    .modal-content {
+        width: 95vw;
+        max-height: 92vh;
+        padding: 3rem 1rem 1.5rem;
+    }
+
+    /* Section header: stack vertically on very small screens */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .section-title {
+        font-size: 1.6rem;
+    }
+
+    /* Character modal: stack columns */
+    .modal-content [style*="flex:1; min-width:180px"] {
+        flex: unset !important;
+        width: 100% !important;
+    }
+
+    /* Ensure touch targets are large enough */
+    .btn, .nav-btn {
+        min-height: 42px;
+    }
 }
+
+@media (max-width: 480px) {
+    .gallery-art-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gallery-writing-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .modal-content {
+        padding: 3rem 0.75rem 1rem;
+    }
+
+    .section-title {
+        font-size: 1.4rem;
+    }
+}

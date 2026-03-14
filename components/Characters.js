@@ -20,6 +20,7 @@ window.renderCharacters = function(data, appInstance) {
                     <div style="margin-top:0.8rem; font-style:italic; font-size:0.85rem; color:var(--text-muted); text-align:center; padding:0 0.5rem;">
                         "${(char.quotes && char.quotes.length) ? char.quotes[0] : ''}"
                     </div>
+                    ${char.sheet_url ? `<div style="text-align:center; margin-top:0.75rem;"><a href="${char.sheet_url}" target="_blank" rel="noopener" class="btn" style="font-size:0.78rem; padding:0.3rem 0.75rem; min-width:auto;" onclick="event.stopPropagation();">📋 Character Sheet</a></div>` : ''}
                 </div>
             `).join('')}
         </div>
@@ -45,9 +46,10 @@ window.renderCharacters = function(data, appInstance) {
                 <div style="display:flex; gap:2rem; flex-wrap:wrap; margin-bottom:1.5rem;">
                     <div style="flex:1; min-width:180px; text-align:center;">
                         <img id="char-modal-img" src="${char.image}" style="width:160px; height:160px; border-radius:10px; border:3px solid var(--accent-gold); object-fit:cover;">
-                        <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center;">
+                        <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap;">
                             <button id="edit-char-img-btn" class="btn" style="font-size:0.75rem; padding:0.3rem 0.6rem; background:var(--panel-border);">Edit Image</button>
                             <button id="edit-char-btn" class="btn" style="font-size:0.75rem; padding:0.3rem 0.6rem; background:var(--accent-gold); color:var(--bg-dark);">✏️ Edit</button>
+                            ${char.sheet_url ? `<a href="${char.sheet_url}" target="_blank" rel="noopener" class="btn" style="font-size:0.75rem; padding:0.3rem 0.6rem;">📋 Sheet</a>` : ''}
                         </div>
                         <h2 style="font-size:1.8rem; margin-top:1rem;">${char.name}</h2>
                         <h4 class="text-gold">${char.race} ${char.class}</h4>
@@ -191,6 +193,8 @@ window.renderCharacters = function(data, appInstance) {
                                     <input type="number" id="ec-ac" value="${char.ac || 0}" min="0" />
                                     <label>Gold (gp)</label>
                                     <input type="number" id="ec-gold" value="${char.gold || 0}" min="0" />
+                                    <label>DnD Beyond Sheet URL</label>
+                                    <input type="url" id="ec-sheet" value="${(char.sheet_url || '').replace(/"/g, '&quot;')}" placeholder="https://www.dndbeyond.com/characters/..." />
                                 </div>
                             </div>
                             <label>Biography</label>
@@ -217,6 +221,7 @@ window.renderCharacters = function(data, appInstance) {
                                 char.hp = parseInt(editBody.querySelector('#ec-hp').value) || 0;
                                 char.ac = parseInt(editBody.querySelector('#ec-ac').value) || 0;
                                 char.gold = parseInt(editBody.querySelector('#ec-gold').value) || 0;
+                                char.sheet_url = editBody.querySelector('#ec-sheet').value.trim();
                                 char.bio = editBody.querySelector('#ec-bio').value;
                                 char.goals = editBody.querySelector('#ec-goals').value;
                                 char.skills = editBody.querySelector('#ec-skills').value;

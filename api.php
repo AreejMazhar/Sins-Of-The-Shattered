@@ -19,12 +19,15 @@ $id = isset($_GET['id']) ? $_GET['id'] : '';
 
 // Allowed entities → table name + id column
 $allowed = [
-    'quests' => ['table' => 'quests', 'idCol' => 'id'],
-    'characters' => ['table' => 'characters', 'idCol' => 'id'],
-    'items' => ['table' => 'items', 'idCol' => 'id'],
-    'npcs' => ['table' => 'npcs', 'idCol' => 'id'],
-    'sessions' => ['table' => 'sessions', 'idCol' => 'id'],
-    'discoveries' => ['table' => 'discoveries', 'idCol' => 'id'],
+    'quests'          => ['table' => 'quests',          'idCol' => 'id'],
+    'characters'      => ['table' => 'characters',      'idCol' => 'id'],
+    'items'           => ['table' => 'items',           'idCol' => 'id'],
+    'npcs'            => ['table' => 'npcs',            'idCol' => 'id'],
+    'sessions'        => ['table' => 'sessions',        'idCol' => 'id'],
+    'discoveries'     => ['table' => 'discoveries',     'idCol' => 'id'],
+    'gallery_art'     => ['table' => 'gallery_art',     'idCol' => 'id'],
+    'gallery_writing' => ['table' => 'gallery_writing', 'idCol' => 'id'],
+    'monsters'        => ['table' => 'monsters',        'idCol' => 'id'],
 ];
 
 if (!isset($allowed[$entity])) {
@@ -205,8 +208,9 @@ function getJsonCols($entity)
 function getBoolCols($entity)
 {
     $map = [
-        'quests' => ['isMainQuest'],
-        'items' => ['inPocketDimension'],
+        'quests'   => ['isMainQuest'],
+        'items'    => ['inPocketDimension'],
+        'monsters' => ['isBoss'],
     ];
     return $map[$entity] ?? [];
 }

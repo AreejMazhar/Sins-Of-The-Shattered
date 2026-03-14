@@ -14,6 +14,12 @@
     <!-- Background Texture -->
     <div class="background-overlay"></div>
 
+    <!-- Mobile Hamburger -->
+    <button id="menu-toggle" class="hamburger-btn" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+    </button>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
@@ -33,6 +39,8 @@
                     <li><button data-target="npcs" class="nav-btn">NPC Database</button></li>
                     <li><button data-target="maps" class="nav-btn">World Maps</button></li>
                     <li><button data-target="journal" class="nav-btn">Session Journal</button></li>
+                    <li><button data-target="gallery" class="nav-btn">Gallery</button></li>
+                    <li><button data-target="monsters" class="nav-btn">Monsters</button></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -68,6 +76,8 @@
     <script src="components/NPCs.js?v=3"></script>
     <script src="components/Maps.js?v=3"></script>
     <script src="components/Journal.js?v=3"></script>
-    <script src="app.js?v=3"></script>
+    <script src="components/Gallery.js?v=4"></script>
+    <script src="components/Monsters.js?v=4"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>

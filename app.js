@@ -12,6 +12,9 @@ class App {
         };
         this.tooltipEl      = document.getElementById('tooltip');
         this.themeToggleBtn = document.getElementById('theme-toggle');
+        this.menuToggle     = document.getElementById('menu-toggle');
+        this.sidebar        = document.getElementById('sidebar');
+        this.sidebarOverlay = document.getElementById('sidebar-overlay');
 
         this.init();
     }
@@ -21,12 +24,20 @@ class App {
         this.navButtons.forEach(btn =>
             btn.addEventListener('click', e => this.handleNavClick(e))
         );
+        // ── Mobile hamburger ──────────────────────────────────────
+        if (this.menuToggle) {
+            this.menuToggle.addEventListener('click', () => this.toggleSidebar());
+        }
+        if (this.sidebarOverlay) {
+            this.sidebarOverlay.addEventListener('click', () => this.closeSidebar());
+        }
+
         this.modal.close.addEventListener('click', () => this.closeModal());
         this.modal.overlay.addEventListener('click', e => {
             if (e.target === this.modal.overlay) this.closeModal();
         });
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') this.closeModal();
+            if (e.key === 'Escape') { this.closeModal(); this.closeSidebar(); }
         });
 
         // ── Theme ────────────────────────────────────────────
@@ -52,24 +63,30 @@ class App {
             </div>`;
 
         // ── Load all data from DB (parallel) ─────────────────
-        const [quests, characters, items, npcs, sessions, discoveries] = await Promise.all([
+        const [quests, characters, items, npcs, sessions, discoveries, galleryArt, galleryWriting, monsters] = await Promise.all([
             DB.load('quests'),
             DB.load('characters'),
             DB.load('items'),
             DB.load('npcs'),
             DB.load('sessions'),
-            DB.load('discoveries')
+            DB.load('discoveries'),
+            DB.load('gallery_art'),
+            DB.load('gallery_writing'),
+            DB.load('monsters')
         ]);
 
         // ── Fallback to mock data if API unavailable ─────────
         const mock = window.campaignData || {};
         window.campaignData = {
-            quests:      quests      || mock.quests      || [],
-            characters:  characters  || mock.characters  || [],
-            items:       items       || mock.items       || [],
-            npcs:        npcs        || mock.npcs        || [],
-            history:     sessions    || mock.history     || [],
-            discoveries: discoveries || mock.discoveries || []
+            quests:          quests          || mock.quests          || [],
+            characters:      characters      || mock.characters      || [],
+            items:           items           || mock.items           || [],
+            npcs:            npcs            || mock.npcs            || [],
+            history:         sessions        || mock.history         || [],
+            discoveries:     discoveries     || mock.discoveries     || [],
+            gallery_art:     galleryArt      || [],
+            gallery_writing: galleryWriting  || [],
+            monsters:        monsters        || []
         };
 
         // ── Render initial view ──────────────────────────────
@@ -82,6 +99,7 @@ class App {
         this.navButtons.forEach(btn => btn.classList.remove('active'));
         e.currentTarget.classList.add('active');
         this.currentView = target;
+        this.closeSidebar(); // close sidebar on mobile after nav
         this.renderView(target);
     }
 
@@ -100,6 +118,8 @@ class App {
                 case 'npcs':       this.mainContent.appendChild(renderNPCs(data, this));       break;
                 case 'maps':       this.mainContent.appendChild(renderMaps(data, this));       break;
                 case 'journal':    this.mainContent.appendChild(renderJournal(data, this));    break;
+                case 'gallery':    this.mainContent.appendChild(renderGallery(data, this));    break;
+                case 'monsters':   this.mainContent.appendChild(renderMonsters(data, this));   break;
                 default:
                     this.mainContent.innerHTML = `<h2>404 — Scroll Not Found</h2>`;
             }
@@ -144,6 +164,23 @@ class App {
 
     hideTooltip() {
         this.tooltipEl.classList.add('hidden');
+    }
+
+    toggleSidebar() {
+        const isOpen = this.sidebar.classList.contains('open');
+        if (isOpen) {
+            this.closeSidebar();
+        } else {
+            this.sidebar.classList.add('open');
+            if (this.sidebarOverlay) this.sidebarOverlay.classList.add('active');
+            if (this.menuToggle) this.menuToggle.classList.add('open');
+        }
+    }
+
+    closeSidebar() {
+        if (this.sidebar) this.sidebar.classList.remove('open');
+        if (this.sidebarOverlay) this.sidebarOverlay.classList.remove('active');
+        if (this.menuToggle) this.menuToggle.classList.remove('open');
     }
 }
 
