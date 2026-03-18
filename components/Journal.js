@@ -21,7 +21,7 @@ window.renderJournal = function(data, appInstance) {
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                             <div>
                                 <span class="text-gold" style="font-family:var(--font-heading); font-size:1.5rem; display:block; margin-bottom:0.25rem;">${entry.title}</span>
-                                <span style="color:var(--text-muted); font-size:0.9rem; display:block; margin-bottom:1rem;">Recorded on ${entry.date}</span>
+                                <span style="color:var(--text-muted); font-size:0.9rem; display:block; margin-bottom:1rem;">Recorded on ${entry.date_display || entry.date || 'Unknown'}</span>
                             </div>
                             <div style="display:flex; gap:0.5rem; flex-shrink:0;">
                                 <button class="btn edit-journal-btn" data-id="${entry.id}" style="font-size:0.8rem; padding:0.3rem 0.6rem;">✏️ Edit</button>
@@ -58,7 +58,7 @@ window.renderJournal = function(data, appInstance) {
             appInstance.openModal(`
                 <div style="border-bottom:1px solid var(--panel-border); padding-bottom:1rem; margin-bottom:1.5rem;">
                     <h2 style="color:var(--accent-gold); font-size:2rem; margin-bottom:0.25rem;">${entry.title}</h2>
-                    <span style="color:var(--text-muted); font-size:0.9rem;">Recorded on ${entry.date}</span>
+                    <span style="color:var(--text-muted); font-size:0.9rem;">Recorded on ${entry.date_display || entry.date || 'Unknown'}</span>
                 </div>
 
                 <div style="margin-bottom:1.5rem; padding-bottom:1.5rem; border-bottom:1px solid var(--panel-border);">

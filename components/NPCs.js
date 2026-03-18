@@ -68,7 +68,7 @@ window.renderNPCs = function(data, appInstance) {
             </div>
             <div style="display:flex; gap:2rem;">
                 <div style="flex:1; text-align:center;">
-                    <img src="${npc.image}" style="width:100%; max-width:250px; border-radius:10px; border:2px solid var(--panel-border); box-shadow:0 10px 20px rgba(0,0,0,0.5);">
+                    <img src="${npc.image}" style="max-width:100%; max-height:400px; object-fit:contain; border-radius:10px; border:2px solid var(--panel-border); box-shadow:0 10px 20px rgba(0,0,0,0.5);">
                 </div>
                 <div style="flex:2;">
                     <h2 style="font-size:2.5rem; color:var(--text-main); border-bottom:1px solid var(--panel-border); margin-bottom:1rem; padding-bottom:0.5rem;">${npc.name}</h2>

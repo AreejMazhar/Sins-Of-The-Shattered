@@ -147,7 +147,7 @@ window.renderItems = function(data, appInstance) {
                     </div>
                     <div style="text-align:center; margin-bottom:2rem;">
                         ${imgSrc
-                            ? `<img src="${imgSrc}" alt="${item.name}" style="width:120px; height:120px; object-fit:cover; border-radius:12px; border:3px solid ${getRarityColor(item.rarity)}; box-shadow:0 10px 20px rgba(0,0,0,0.5);">`
+                            ? `<img src="${imgSrc}" alt="${item.name}" style="max-width:100%; max-height:250px; object-fit:contain; border-radius:12px; border:3px solid ${getRarityColor(item.rarity)}; box-shadow:0 10px 20px rgba(0,0,0,0.5);">`
                             : `<div style="font-size:5rem; text-shadow:0 0 20px ${getRarityColor(item.rarity)};">${fallback}</div>`
                         }
                         <h2 style="font-size:3rem; color:${getRarityColor(item.rarity)}; margin-top:1rem;">${item.name}</h2>
