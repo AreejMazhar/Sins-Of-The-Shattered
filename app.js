@@ -63,7 +63,7 @@ class App {
             </div>`;
 
         // ── Load all data from DB (parallel) ─────────────────
-        const [quests, characters, items, npcs, sessions, discoveries, galleryArt, galleryWriting, monsters] = await Promise.all([
+        const [quests, characters, items, npcs, sessions, discoveries, galleryArt, galleryWriting, monsters, documents] = await Promise.all([
             DB.load('quests'),
             DB.load('characters'),
             DB.load('items'),
@@ -72,7 +72,8 @@ class App {
             DB.load('discoveries'),
             DB.load('gallery_art'),
             DB.load('gallery_writing'),
-            DB.load('monsters')
+            DB.load('monsters'),
+            DB.load('documents')
         ]);
 
         // ── Fallback to mock data if API unavailable ─────────
@@ -86,7 +87,8 @@ class App {
             discoveries:     discoveries     || mock.discoveries     || [],
             gallery_art:     galleryArt      || [],
             gallery_writing: galleryWriting  || [],
-            monsters:        monsters        || []
+            monsters:        monsters        || [],
+            documents:       documents       || []
         };
 
         // ── Render initial view ──────────────────────────────
@@ -120,6 +122,7 @@ class App {
                 case 'journal':    this.mainContent.appendChild(renderJournal(data, this));    break;
                 case 'gallery':    this.mainContent.appendChild(renderGallery(data, this));    break;
                 case 'monsters':   this.mainContent.appendChild(renderMonsters(data, this));   break;
+                case 'archives':   this.mainContent.appendChild(renderArchives(data, this));   break;
                 default:
                     this.mainContent.innerHTML = `<h2>404 — Scroll Not Found</h2>`;
             }

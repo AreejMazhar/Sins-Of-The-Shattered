@@ -28,6 +28,7 @@ $allowed = [
     'gallery_art'     => ['table' => 'gallery_art',     'idCol' => 'id'],
     'gallery_writing' => ['table' => 'gallery_writing', 'idCol' => 'id'],
     'monsters'        => ['table' => 'monsters',        'idCol' => 'id'],
+    'documents'       => ['table' => 'documents',       'idCol' => 'id'],
 ];
 
 if (!isset($allowed[$entity])) {
